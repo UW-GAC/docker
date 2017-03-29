@@ -1,0 +1,15 @@
+FROM uwgac/ubuntu-1604-base:latest
+
+# get mpich, openmpi, and hdf5
+RUN apt-get update && apt-get install -y \
+  mpich \
+  h5utils \
+  hdf5-helpers \
+  hdf5-tools \
+  libhdf5-10 \
+  libhdf5-cpp-11 \
+  libhdf5-dev \
+  libhdf5-doc \
+  libopenmpi-dev \
+  libopenmpi1.10 \
+  openmpi-doc
