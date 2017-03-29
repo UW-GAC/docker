@@ -1,0 +1,33 @@
+FROM ubuntu:16.04
+
+# get dependent packages
+RUN apt-get update && apt-get install -y \
+  build-essential \
+  python-dev \
+  git \
+  nodejs-legacy \
+  npm \
+  gnome-tweak-tool \
+  openjdk-8-jdk \
+  python-pip \
+  python-virtualenv \
+  python-numpy \
+  python-matplotlib \
+  wget \
+  cpio \
+  iputils-ping \
+  texinfo \
+  gfortran \
+  libreadline6 \
+  libreadline6-dev \
+  bzip2 \
+  libbz2-dev \
+  vim \
+  lzma \
+  liblzma-dev \
+  libpcre3-dev \
+  libcurl4-gnutls-dev \
+  default-jre \
+  default-jdk \
+  nfs-common
+
