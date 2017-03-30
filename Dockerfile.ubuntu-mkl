@@ -4,7 +4,7 @@ FROM uwgac/ubuntu-1604-base:latest
 RUN mkdir /usr/local/src/mkl
 
 # mkl add the host tar file
-ADD build_files/l_mkl_2017.2.174.tgz /usr/local/src/mkl/
+ADD l_mkl_2017.2.174.tgz /usr/local/src/mkl/
 # install mkl silently
 RUN echo "\n\n*** building mkl ... ***\n\n" && \
   cd /usr/local/src/mkl/l_mkl_2017.2.174 && \
