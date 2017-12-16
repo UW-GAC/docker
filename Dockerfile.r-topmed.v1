@@ -1,10 +1,5 @@
 FROM uwgac/r-mkl:3.3.2
 
-# install the added ubuntu packages for topmed R stuff
-RUN apt-get update && apt-get install -y \
-  libnetcdf-dev \
-  libxml2-dev
-
 # create an R script to install the topmed packages
 RUN echo '#!/usr/local/bin/Rscript --vanilla --no-save --slave' > /tmp/installtopmed.R && \
   echo 'source("https://bioconductor.org/biocLite.R")' >> /tmp/installtopmed.R && \
@@ -26,4 +21,3 @@ RUN mkdir /usr/local/src/topmed && \
 
 # create a link analysis_pipeline
 RUN ln -s /usr/local/src/topmed/analysis_pipeline /usr/local/analysis_pipeline
-
