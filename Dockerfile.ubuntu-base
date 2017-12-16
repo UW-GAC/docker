@@ -1,6 +1,7 @@
 FROM ubuntu:16.04
 
 # get dependent packages
+
 RUN apt-get update && apt-get install -y \
   build-essential \
   python-dev \
@@ -29,5 +30,13 @@ RUN apt-get update && apt-get install -y \
   libcurl4-gnutls-dev \
   default-jre \
   default-jdk \
-  nfs-common
-
+  nfs-common \
+  libpng12-dev \
+  libcairo2-dev \
+  libnetcdf-dev \
+  libxml2-dev \
+  libpango1.0-dev \
+  pandoc \
+  freeglut3-dev \
+  libnetcdf-dev \
+  libxml2-dev
