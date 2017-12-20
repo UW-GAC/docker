@@ -11,7 +11,7 @@ RUN Rscript /tmp/installtopmed.R
 # install devel topmed pipeline
 RUN mkdir /usr/local/src/topmed_devel && \
   cd /usr/local/src/topmed_devel && \
-  git clone -b roybranch https://github.com/UW-GAC/analysis_pipeline.git && \
+  git clone -b devel https://github.com/UW-GAC/analysis_pipeline.git && \
   cd /usr/local/src/topmed_devel/analysis_pipeline && \
   R CMD INSTALL TopmedPipeline
 
