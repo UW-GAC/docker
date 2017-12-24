@@ -1,0 +1,25 @@
+ARG iversion=master
+ARG iname=r343-topmed
+FROM uwgac/$iname:$iversion
+
+# create an R script to install the devel topmed packages
+RUN echo '#!/usr/local/bin/Rscript --vanilla --no-save --slave' > /tmp/installtopmed.R && \
+  echo 'devtools::install_git("git://github.com/smgogarten/GENESIS.git")' >> /tmp/installtopmed.R  && \
+  echo 'devtools::install_git("https://github.com/zhengxwen/SNPRelate.git")' >> /tmp/installtopmed.R
+
+# execute R script to install devel topmed packages
+RUN Rscript /tmp/installtopmed.R
+
+# install devel topmed pipeline
+RUN mkdir /usr/local/src/topmed_devel && \
+  cd /usr/local/src/topmed_devel && \
+  git clone -b roybranch https://github.com/UW-GAC/analysis_pipeline.git && \
+  cd /usr/local/src/topmed_devel/analysis_pipeline && \
+  R CMD INSTALL TopmedPipeline
+
+# create a link analysis_pipeline
+RUN if [ -d /usr/local/analysis_pipeline ]; then \
+       unlink /usr/local/analysis_pipeline; \
+    fi
+
+RUN ln -s /usr/local/src/topmed_devel/analysis_pipeline /usr/local/analysis_pipeline
