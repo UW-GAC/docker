@@ -1,12 +1,15 @@
-FROM uwgac/ubuntu-1604-hpc:latest
+ARG iversion=latest
+ARG iname=ubuntu-1604-hpc
+FROM uwgac/$iname:$iversion
 
+ARG mklversion=l_mkl_2017.3.196
 # try mkl
 RUN mkdir /usr/local/src/mkl
 
 # mkl add the host tar file
-ADD l_mkl_2017.3.196.tgz /usr/local/src/mkl/
+ADD $mklversion.tgz /usr/local/src/mkl/
 # install mkl silently
 RUN echo "\n\n*** building mkl ... ***\n\n" && \
-  cd /usr/local/src/mkl/l_mkl_2017.3.196 && \
+  cd /usr/local/src/mkl/$mklversion && \
   sed 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' silent.cfg > silent_build.cfg && \
   ./install.sh --silent ./silent_build.cfg

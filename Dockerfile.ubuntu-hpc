@@ -1,4 +1,6 @@
-FROM uwgac/ubuntu-1604-base:latest
+ARG iversion=latest
+ARG iname=ubuntu-1604-base
+FROM uwgac/$iname:$iversion
 
 # get mpich, openmpi, and hdf5
 RUN apt-get update && apt-get install -y \

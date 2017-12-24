@@ -1,4 +1,6 @@
-FROM ubuntu:16.04
+ARG iname=ubuntu
+ARG iversion=16.04
+FROM $iname:$iversion
 
 # get dependent packages
 
@@ -39,4 +41,6 @@ RUN apt-get update && apt-get install -y \
   pandoc \
   freeglut3-dev \
   libnetcdf-dev \
-  libxml2-dev
+  libxml2-dev \
+  autoconf \
+  libncurses5-dev
