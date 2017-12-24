@@ -23,3 +23,13 @@ RUN if [ -d /usr/local/analysis_pipeline ]; then \
     fi
 
 RUN ln -s /usr/local/src/topmed_devel/analysis_pipeline /usr/local/analysis_pipeline
+
+# clone locuszoom
+RUN cd /usr/local/src && \
+   git clone --single https://github.com/UW-GAC/locuszoom-standalone
+
+# create links
+RUN if [ -d /usr/local/locuszoom-standalone ]; then \
+       unlink /usr/local/locuszoom-standalone; \
+    fi
+RUN ln -s /usr/local/src/locuszoom-standalone /usr/local/locuszoom-standalone
