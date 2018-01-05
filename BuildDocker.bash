@@ -8,7 +8,7 @@ if [ $# -eq 0 ]; then
    # build them all
    for f in $DFILES; do
       echo ">>> Building $f"
-      cmd="docker build -t uwgac/${INAMES[INDEX]}:${TAGS[INDEX]} -f $f ."
+      cmd="docker build --no-cache -t uwgac/${INAMES[INDEX]}:${TAGS[INDEX]} -f $f ."
       echo $cmd
       $cmd
       let INDEX=INDEX+1
@@ -18,7 +18,7 @@ else
    for f in $DFILES; do
       if [ $f == $TF ]; then
          echo ">>> Building $f"
-         cmd="docker build -t uwgac/${INAMES[INDEX]}:${TAGS[INDEX]} -f $f ."
+         cmd="docker build --no-cache -t uwgac/${INAMES[INDEX]}:${TAGS[INDEX]} -f $f ."
          echo $cmd
          $cmd
          exit 0
