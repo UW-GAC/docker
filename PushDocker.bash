@@ -1,6 +1,6 @@
 #!/bin/bash
-INAMES="ubuntu-1604-base ubuntu-1604-hpc ubuntu-1604-mkl r-mkl apps-topmed r343-topmed  r343-topmed"
-declare -a TAGS=("latest" "latest" "latest" "3.4.3" "latest" "master" "devel")
+INAMES="ubuntu-1604-base ubuntu-1604-hpc ubuntu-1604-mkl r-mkl apps-topmed r343-topmed r343-topmed r343-topmed"
+declare -a TAGS=("latest" "latest" "latest" "3.4.3" "latest" "master" "devel" "roybranch")
 
 INDEX=0
 if [ $# -eq 0 ]; then

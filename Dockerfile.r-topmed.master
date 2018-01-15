@@ -15,11 +15,16 @@ RUN echo '#!/usr/local/bin/Rscript --vanilla --no-save --slave' > /tmp/installto
 RUN Rscript /tmp/installtopmed.R
 
 # install topmed pipeline
-RUN mkdir /usr/local/src/topmed && \
-  cd /usr/local/src/topmed && \
-  git clone https://github.com/UW-GAC/analysis_pipeline.git && \
-  cd /usr/local/src/topmed/analysis_pipeline && \
+ENV ANALYSIS_PIPELINE_BRANCH=master
+RUN mkdir /usr/local/src/topmed_$ANALYSIS_PIPELINE_BRANCH && \
+  cd /usr/local/src/topmed_$ANALYSIS_PIPELINE_BRANCH && \
+  git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git && \
+  cd /usr/local/src/topmed_$ANALYSIS_PIPELINE_BRANCH/analysis_pipeline && \
   R CMD INSTALL TopmedPipeline
 
 # create a link analysis_pipeline
-RUN ln -s /usr/local/src/topmed/analysis_pipeline /usr/local/analysis_pipeline
+RUN if [ -d /usr/local/analysis_pipeline ]; then \
+       unlink /usr/local/analysis_pipeline; \
+    fi
+
+RUN ln -s /usr/local/src/topmed_$ANALYSIS_PIPELINE_BRANCH/analysis_pipeline /usr/local/analysis_pipeline
