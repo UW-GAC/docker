@@ -4,8 +4,8 @@ FROM uwgac/$iname:$iversion
 
 # create an R script to install the devel topmed packages
 RUN echo '#!/usr/local/bin/Rscript --vanilla --no-save --slave' > /tmp/installtopmed.R && \
-  echo 'devtools::install_git("git://github.com/smgogarten/GENESIS.git")' >> /tmp/installtopmed.R  && \
-  echo 'devtools::install_git("https://github.com/zhengxwen/SNPRelate.git")' >> /tmp/installtopmed.R
+  echo 'devtools::install_github("smgogarten/GENESIS")' >> /tmp/installtopmed.R  && \
+  echo 'devtools::install_github("zhengxwen/SNPRelate")' >> /tmp/installtopmed.R
 
 # execute R script to install devel topmed packages
 RUN Rscript /tmp/installtopmed.R
