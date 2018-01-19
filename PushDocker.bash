@@ -14,8 +14,18 @@ if [ $# -eq 0 ]; then
    done
 else
    TF=$1
+   R343=r343-topmed
    for f in $INAMES; do
       if [ $f == $TF ]; then
+         if [ $f == $R343]; then
+             if [ $# -eq 2 ]; then
+                 TAG=$2
+             else
+                 TAG=devel
+             fi
+         else
+             TAG=TAGS[INDEX]
+         fi
          echo ">>> Pushing $f"
          cmd="docker push uwgac/$f:${TAGS[INDEX]}"
          echo $cmd
