@@ -24,7 +24,7 @@ The docker image names are similar to the names of the associated docker build f
 | Dockerfile.ubuntu-mkl | ubuntu-1604-mkl | latest |
 | Dockerfile.r-mkl | r-mkl | 3.4.3 |
 | Dockerfile.apps | apps-topmed | latest |
-| Dockerfile.r-topmed.master | r343-topmed | latest |
+| Dockerfile.r-topmed.master | r343-topmed | master |
 | Dockerfile.r-topmed.devel | r343-topmed | devel |
 
 From the above table, the build order or dependency of the docker images are:
