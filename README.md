@@ -10,10 +10,19 @@ Each docker image is built from an associated docker build file.  Because buildi
 The build order and naming of the TOPMed docker images is specified in the build bash script `BuildDocker.bash`.
 
 The current approach for creating a docker image in the `uwgac` docker hub is to do the following:
-1. Build the docker images using the bash build script (`BuildDocker.bash`) on a local computer
-2. Push the docker images using the bash push script (`PushDocker.bash`) on this local computer
+1. Build the docker images on your local computer using the bash build script (`BuildDocker.bash`) on a local computer
+2. Push these docker images from your local computer to dockerhub using the bash push script (`PushDocker.bash`) on this local computer
+
+The bash build script `BuildDocker.bash` can either build all of the docker images supporting TOPMed (by not specifying any command line arguments) or can be used to build a single docker image like `r343-topmed`.  When building all of the images, the script builds them in the appropriate order (see section below).  To building a specific docker image, one or two arguments are passed in:
+1. the docker image name (e.g., `r343-topmed`)
+2. optionally, the docker tag (e.g., `genesis2`)
+
+The second option is used for building `r343-topmed` image because we have multiple tags which are associated the analysis pipeline github branches.  This enables us to have access to the various versions of analysis pipeline.  When building `r343-topmed`, if the tag argument is not passed, then the `master` version of analysis pipeline is built.
 
 (See `build details` section below for additional information)
+
+Similarly, the bash push script `PushDocker.bash` is used to push TOPMed's docker images to the dockerhub.  The script can push either all of the images (assuming they exist on your local computer) or a single image.  It takes the same shell arguments as the build script.
+
 ## docker image names and tags ##
 The docker image names are similar to the names of the associated docker build file; but they are not exactly the same.  The following table lists the names of the docker build files, default names of the docker images, and the default tags of the images.  The build order is also implied in the table.
 
@@ -25,14 +34,16 @@ The docker image names are similar to the names of the associated docker build f
 | Dockerfile.r-mkl | r-mkl | 3.4.3 |
 | Dockerfile.apps | apps-topmed | latest |
 | Dockerfile.r-topmed.master | r343-topmed | master |
+| Dockerfile.r-topmed.genesis2 | r343-topmed | genesis2 |
 | Dockerfile.r-topmed.devel | r343-topmed | devel |
 
 From the above table, the build order or dependency of the docker images are:
 
-`ubuntu-1604-base:latest => ubuntu-1604-hpc:latest => ubuntu-1604-mkl:latest => r-mkl:3.4.3 => apps-topmed:latest => r343-topmed:master => r343-topmed:devel`
+`ubuntu-1604-base:latest => ubuntu-1604-hpc:latest => ubuntu-1604-mkl:latest => r-mkl:3.4.3 => apps-topmed:latest => r343-topmed:master => { r343-topmed:devel, r343-topmed:genesis2 }`
 
+In the above build order, `r343-topmed:master` is the basis for both `r343-topmed:devel` and `r343-topmed:genesis2`
 ## build details ##
-1. Building a docker image is based on executing the docker `build` command and specifying the docker build file.  When executing the `build` command, an image and tag is provided. For example,
+1. Building a docker image is based on executing the docker `build` command and specifying the docker build file.  When executing the `build` command, an image name and tag is provided. For example,
 ```{r}
 docker build -t uwgac/r-mkl:3.4.3 -f Dockerfile.r-mkl .
 ```
