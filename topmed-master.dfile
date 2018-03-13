@@ -1,0 +1,84 @@
+ARG itag=latest
+ARG r_version=3.4.3
+ARG base_name=r-${r_version}-mkl
+FROM uwgac/$base_name:$itag
+
+ARG r_version
+ENV ANALYSIS_PIPELINE_BRANCH=master
+RUN echo "Building non-parallel version of  $ANALYSIS_PIPELINE_BRANCH ..."
+# create link to appropriate R
+RUN if [ -d /usr/local/bin/R ]; then \
+        unlink /usr/local/bin/R; \
+    fi
+RUN if [ -d /usr/local/bin/Rscript ]; then \
+        unlink /usr/local/bin/Rscript; \
+    fi
+RUN ln -s /usr/local/R-$r_version/lib/R/bin/R /usr/local/bin/R && \
+      ln -s /usr/local/R-$r_version/lib/R/bin/Rscript /usr/local/bin/Rscript
+
+
+# create an R script to install the topmed packages
+RUN echo '#!/usr/local/bin/Rscript --vanilla --no-save --slave' > /tmp/installtopmed.R && \
+  echo 'source("https://bioconductor.org/biocLite.R")' >> /tmp/installtopmed.R && \
+  echo 'biocLite( c("SeqVarTools", "SNPRelate", "GENESIS") )' >> /tmp/installtopmed.R && \
+  echo 'biocLite( c("argparser", "survey", "CompQuadForm", "devtools") )' >> /tmp/installtopmed.R && \
+  echo 'biocLite( c("dplyr", "tidyr", "ggplot2", "GGally") )' >> /tmp/installtopmed.R && \
+  echo 'biocLite( ask=FALSE )' >> /tmp/installtopmed.R && \
+  echo 'install.packages("rmarkdown",rep="https://ftp.osuosl.org/pub/cran/")' >> /tmp/installtopmed.R
+
+# execute R script to install topmed packages
+RUN Rscript /tmp/installtopmed.R
+
+# install topmed pipeline
+RUN mkdir /usr/local/src/topmed_$ANALYSIS_PIPELINE_BRANCH && \
+  cd /usr/local/src/topmed_$ANALYSIS_PIPELINE_BRANCH && \
+  git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git && \
+  cd /usr/local/src/topmed_$ANALYSIS_PIPELINE_BRANCH/analysis_pipeline && \
+  R CMD INSTALL TopmedPipeline
+
+# create a link analysis_pipeline
+RUN if [ -d /usr/local/analysis_pipeline_$ANALYSIS_PIPELINE_BRANCH ]; then \
+        unlink /usr/local/analysis_pipeline_$ANALYSIS_PIPELINE_BRANCH; \
+    fi
+
+RUN ln -s /usr/local/src/topmed_$ANALYSIS_PIPELINE_BRANCH/analysis_pipeline /usr/local/analysis_pipeline_$ANALYSIS_PIPELINE_BRANCH
+
+# parallel version
+ARG p_version=${r_version}p
+# create link to appropriate R
+RUN echo "Building parallel version of  $ANALYSIS_PIPELINE_BRANCH ..."
+RUN if [ -f /usr/local/bin/R ]; then \
+        unlink /usr/local/bin/R; \
+    fi
+RUN if [ -f /usr/local/bin/Rscript ]; then \
+        unlink /usr/local/bin/Rscript; \
+    fi
+RUN ln -s /usr/local/R-$p_version/lib/R/bin/R /usr/local/bin/R && \
+    ln -s /usr/local/R-$p_version/lib/R/bin/Rscript /usr/local/bin/Rscript
+
+
+# create an R script to install the topmed packages
+RUN echo '#!/usr/local/bin/Rscript --vanilla --no-save --slave' > /tmp/installtopmed.R && \
+    echo 'source("https://bioconductor.org/biocLite.R")' >> /tmp/installtopmed.R && \
+    echo 'biocLite( c("SeqVarTools", "SNPRelate", "GENESIS") )' >> /tmp/installtopmed.R && \
+    echo 'biocLite( c("argparser", "survey", "CompQuadForm", "devtools") )' >> /tmp/installtopmed.R && \
+    echo 'biocLite( c("dplyr", "tidyr", "ggplot2", "GGally") )' >> /tmp/installtopmed.R && \
+    echo 'biocLite( ask=FALSE )' >> /tmp/installtopmed.R && \
+    echo 'install.packages("rmarkdown",rep="https://ftp.osuosl.org/pub/cran/")' >> /tmp/installtopmed.R
+
+# execute R script to install topmed packages
+RUN Rscript /tmp/installtopmed.R
+
+# install topmed pipeline
+RUN mkdir /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p && \
+    cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p && \
+    git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git && \
+    cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline && \
+    R CMD INSTALL TopmedPipeline
+
+# create a link analysis_pipeline
+RUN if [ -d /usr/local/analysis_pipeline_${ANALYSIS_PIPELINE_BRANCH}p ]; then \
+        unlink /usr/local/analysis_pipeline_${ANALYSIS_PIPELINE_BRANCH}p; \
+    fi
+
+RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline /usr/local/analysis_pipeline_${ANALYSIS_PIPELINE_BRANCH}p

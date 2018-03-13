@@ -1,0 +1,67 @@
+ARG base_name=ubuntu-16.04-hpc
+ARG itag=latest
+FROM uwgac/$base_name:$itag
+
+# need curses5
+Run apt-get update && apt-get install -y libncurses5-dev
+
+ARG APP_BSRC=/usr/local/src
+ARG APP_BBIN=/usr/local/bin
+# htslib and bcf tools
+ARG THE_APP=htslib
+RUN if [ ! -f /usr/local/lib/libhts.a ]; then \
+        echo ">>> Installing $THE_APP ...";  \
+        if [ -d $APP_BSRC/$THE_APP ]; then \
+            echo "ERROR: $APP_BSRC/$THE_APP exists";  \
+            STOPSIGNAL 9;  \
+        fi;  \
+        cd $APP_BSRC && \
+        git clone --branch=develop git://github.com/samtools/$THE_APP.git; \
+    else  \
+        "$THE_APP is already installed.";  \
+    fi
+
+# bcftools
+ARG THE_APP=bcftools
+RUN \
+    if ! which $THE_APP | grep $THE_APP > /dev/null; then  \
+        echo ">>> Installing $THE_APP ...";  \
+        if [ -d $APP_BSRC/$THE_APP ]; then  \
+            echo "ERROR: $APP_BSRC/$THE_APP exists";  \
+            exit 2;  \
+        fi;  \
+        cd $APP_BSRC && \
+        git clone --branch=develop git://github.com/samtools/$THE_APP.git &&  \
+        cd $THE_APP &&  \
+        make &&  \
+        make install;  \
+    else  \
+        echo "$THE_APP is already installed.";  \
+    fi
+
+# sam tools
+ARG THE_APP=samtools
+RUN \
+    if ! which $THE_APP | grep $THE_APP > /dev/null; then  \
+        echo ">>> Installing $THE_APP ...";  \
+        if [ -d $APP_BSRC/$THE_APP ]; then  \
+            echo "ERROR: $APP_BSRC/$THE_APP exists";  \
+            exit 2;  \
+        fi;  \
+        cd $APP_BSRC && \
+        git clone --branch=develop git://github.com/samtools/$THE_APP.git &&  \
+        cd $THE_APP &&  \
+        make &&  \
+        make install;  \
+    else  \
+        echo "$THE_APP is already installed.";  \
+    fi
+
+# clone locuszoom; create links
+RUN cd /usr/local/src && \
+   git clone --single https://github.com/UW-GAC/locuszoom-standalone
+
+RUN if [ -d /usr/local/locuszoom-standalone ]; then \
+       unlink /usr/local/locuszoom-standalone; \
+    fi
+RUN ln -s /usr/local/src/locuszoom-standalone /usr/local/locuszoom-standalone
