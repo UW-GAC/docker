@@ -1,65 +1,60 @@
 ## docker ##
 
-This project contains the docker build files for building the docker images supporting TOPMed.
+This project builds the docker images associated with TOPMed.  The project includes a docker build file associated with each image and a makefile for building the docker images by executing docker build files in a correct order (see below).
 
-It also contains two bash script files (`BuildDocker.bash` and `PushDocker.bash`):  (1) to build one or all of the images and (2) to push the built images to the `uwgac` dockerhub.
+## building the docker images ##
+Execute the makefile (`Makefile`) for building the docker images in the correct order (as described in the next section).  The makefile contains macros defining each image name, image tag, and docker build file.  Also the make file defines the dependencies of the docker images.
 
-## building and pushing the docker images ##
-Each docker image is built from an associated docker build file.  Because building a docker image is dependent upon another image, the docker images must be built in a specific order.  Additionally, when a docker image is built, its name and tag is specified.
+When a docker image is successfully built, an empty target file is created with the following name:
+```{r}
+<docker image name>.image
+```
+If the target file does not exist (or it has been created before the associated docker build file), the docker build file is executed.  Conversely, if the target file does exist and is newer than the associated docker build file, then the docker build file is not executed.
 
-The build order and naming of the TOPMed docker images is specified in the build bash script `BuildDocker.bash`.
+Additionally, the docker build option to build without using the cache can be specified when executing the makefile using the DB_FLAGS.  For example,
+```{r}
+make DB_FLAGS=--no-cache
+```
 
-The current approach for creating a docker image in the `uwgac` docker hub is to do the following:
-1. Build the docker images on your local computer using the bash build script (`BuildDocker.bash`) on a local computer
-2. Push these docker images from your local computer to dockerhub using the bash push script (`PushDocker.bash`) on this local computer
+#### (special note for building building the ubuntu hpc image) ####
+Building the ubuntu hpc image requires Intel's Math Kernel Library (MKL) and the tar file must exist in the current build directory.  The default MKL being installed and built is `l_mkl_2018.1.163.tgz`
 
-The bash build script `BuildDocker.bash` can either build all of the docker images supporting TOPMed (by not specifying any command line arguments) or can be used to build a single docker image like `r343-topmed`.  When building all of the images, the script builds them in the appropriate order (see section below).  To building a specific docker image, one or two arguments are passed in:
-1. the docker image name (e.g., `r343-topmed`)
-2. optionally, the docker tag (e.g., `genesis2`)
+The version of MKL can be changed by executing the makefile with the `MKL_VERSION` macro.  For example,
 
-The second option is used for building `r343-topmed` image because we have multiple tags which are associated the analysis pipeline github branches.  This enables us to have access to the various versions of analysis pipeline.  When building `r343-topmed`, if the tag argument is not passed, then the `master` version of analysis pipeline is built.
+```{r}
+make MKL_VERSION=2018.1.163
+```
 
-(See `build details` section below for additional information)
+## pushing the docker images to uwgac repository##
+The makefile also provides the ability to push the docker images to the repository:
+```{r}
+make push
+```
 
-Similarly, the bash push script `PushDocker.bash` is used to push TOPMed's docker images to the dockerhub.  The script can push either all of the images (assuming they exist on your local computer) or a single image.  It takes the same shell arguments as the build script.
+If a docker image has not been built (because the .image file does not exist or is newer than the docker build file), the docker image will be built before the push.
+
+## docker build files ##
+The docker build files are:
+1. ubuntu-hpc.dfile - Builds a ubuntu-based image with hpc functionality.
+2. apps.dfile - From the ubuntu-based image, build an application image including the applications `samtools` and `locuszoom`.
+3. r-mkl.dfile - Build an R image from the application image using both sequential and parallel MKL.
+4. topmed-master.dfile - From the R image, build a TOPMed image using the master branch of the analysis pipeline.
+5. topmed-devel.dfile - Build a TOPMed image of the devel branch of analysis pipeline from the TOPMed master image.
 
 ## docker image names and tags ##
-The docker image names are similar to the names of the associated docker build file; but they are not exactly the same.  The following table lists the names of the docker build files, default names of the docker images, and the default tags of the images.  The build order is also implied in the table.
+The docker image names and tags are controlled by the makefile in conjunction with the docker build files.  The default names and tags are described in the following table:
 
 | docker build file | default docker image | default docker tag |
 | --- | --- | --- |
-| Dockerfile.ubuntu-base | ubuntu-1604-base | latest |
-| Dockerfile.ubuntu-hpc | ubuntu-1604-hpc | latest |
-| Dockerfile.ubuntu-mkl | ubuntu-1604-mkl | latest |
-| Dockerfile.r-mkl | r-mkl | 3.4.3 |
-| Dockerfile.apps | apps-topmed | latest |
-| Dockerfile.r-topmed.master | r343-topmed | master |
-| Dockerfile.r-topmed.genesis2 | r343-topmed | genesis2 |
-| Dockerfile.r-topmed.devel | r343-topmed | devel |
+| ubuntu-hpc.dfile | ubuntu-16.04-hpc | latest |
+| apps.dfile | apps | latest |
+| r-mkl.dfile | r-3.4.3-mkl | latest |
+| topmed-master.dfile | tomped-master | latest |
+| topmed-devel.dfile | topmed-devel | latest |
 
-From the above table, the build order or dependency of the docker images are:
+The default versions of software (e.g., `R 3.4.3`) is specified in both the makefile and the docker build files; but these versions can be changed either in the makefile or as options when executing tthe makefile.  For example, to build with R version 3.5.0:
 
-`ubuntu-1604-base:latest => ubuntu-1604-hpc:latest => ubuntu-1604-mkl:latest => r-mkl:3.4.3 => apps-topmed:latest => r343-topmed:master => { r343-topmed:devel, r343-topmed:genesis2 }`
-
-In the above build order, `r343-topmed:master` is the basis for both `r343-topmed:devel` and `r343-topmed:genesis2`
-## build details ##
-1. Building a docker image is based on executing the docker `build` command and specifying the docker build file.  When executing the `build` command, an image name and tag is provided. For example,
 ```{r}
-docker build -t uwgac/r-mkl:3.4.3 -f Dockerfile.r-mkl .
+make R_VERSION=3.5.0
 ```
-(see `BuildDocker.bash`)
-
-2. The docker build files rely on using the `ARG` instruction to define the default image names, tags, and software versions in the build file.  For example,
-```{r}
-ARG iname=ubuntu-1604-mkl
-ARG iversion=latest
-FROM uwgac/$iname:$iversion
-ARG rversion=3.4.3
-```
-3. The docker build command can alter these default names using the `--build-arg` option.  For example,
-```{r}
-docker build -t uwgac/r-mkl:3.4.4 --build-arg rversion=3.4.4 -f Dockerfile.r-mkl .
-```
-In the above example, the `r-mkl:3.4.4` image using R 3.4.4 (see `Dockerfile.r-mkl` for more details)
-
-4. The docker image `ubuntu-1604-mkl` builds and installs Intel's Math Kernel Library (MKL).  In order to do this, the MKL tar file must be present in the same directory where the build is executing.  The current MKL tar file being built (and identified as an ARG in the build file) is `l_mkl_2017.3.196.tgz`
+(Note: this functionality has not been fully tested.)
