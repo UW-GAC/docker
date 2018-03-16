@@ -5,7 +5,12 @@ OS_VERSION = 16.04
 R_VERSION = 3.4.3
 MKL_VERSION = 2018.1.163
 DB_FLAGS =
-
+ifeq ($(cfg),cache)
+	CACHE_OPT =
+else
+	CACHE_OPT = --no-cache
+endif
+DB_OPTS = $(DB_FLAGS) $(CACHE_OPT)
 # docker image names
 DI_OS = $(DF_BASE_OS)-$(OS_VERSION)-hpc
 DI_R = r-$(R_VERSION)-mkl
@@ -40,35 +45,35 @@ push: $(D_PUSH)
 	@echo ">>> Push is complete"
 
 $(DI_OS).image: $(DF_OS)
-	@echo ">>> "Building $(D_REP)/$@:$(DT_OS)
-	$(DB) -t $(D_REP)/$(DI_OS):$(DT_OS) $(DB_FLAGS) --build-arg base_os=$(DF_BASE_OS) \
+	@echo ">>> "Building $(D_REP)/$(DI_OS):$(DT_OS)
+	$(DB) -t $(D_REP)/$(DI_OS):$(DT_OS) $(DB_OPTS) --build-arg base_os=$(DF_BASE_OS) \
         --build-arg mkl_version=$(MKL_VERSION) --build-arg itag=$(OS_VERSION) -f $(DF_OS) . > build_$(DI_OS).log
 	touch $(DI_OS).image
 
-$(DI_APPS).image: $(DF_APPS) $(DI_OS)
-	@echo ">>> "Building $(D_REP)/$@:$(DT_APPS)
-	$(DB) -t $(D_REP)/$(DI_APPS):$(DT_APPS) $(DB_FLAGS) \
+$(DI_APPS).image: $(DF_APPS) $(DI_OS).image
+	@echo ">>> "Building $(D_REP)/$(DI_APPS):$(DT_APPS)
+	$(DB) -t $(D_REP)/$(DI_APPS):$(DT_APPS) $(DB_OPTS) \
         --build-arg base_name=$(DI_OS) \
         --build-arg itag=$(DT_OS) -f $(DF_APPS) . > build_$(DI_APPS).log
 	touch $(DI_APPS).image
 
-$(DI_R).image: $(DF_R) $(DI_APPS)
-	@echo ">>> "Building $(D_REP)/$@:$(DT_R)
-	$(DB) -t $(D_REP)/$(DI_R):$(DT_R) $(DB_FLAGS) \
+$(DI_R).image: $(DF_R) $(DI_APPS).image
+	@echo ">>> "Building $(D_REP)/$(DI_R):$(DT_R)
+	$(DB) -t $(D_REP)/$(DI_R):$(DT_R) $(DB_OPTS) \
         --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_APPS) \
         --build-arg itag=$(DT_APPS) -f $(DF_R) . > build_$(DI_R).log
 	touch $(DI_R).image
 
-$(DI_TM_MASTER).image: $(DF_TM_MASTER) $(DI_R)
+$(DI_TM_MASTER).image: $(DF_TM_MASTER) $(DI_R).image
 	@echo ">>> "Building $(D_REP)/$(DI_TM_MASTER):$(DT_TM_MASTER)
-	$(DB) -t $(D_REP)/$(DI_TM_MASTER):$(DT_TM_MASTER) $(DB_FLAGS)  \
+	$(DB) -t $(D_REP)/$(DI_TM_MASTER):$(DT_TM_MASTER) $(DB_OPTS)  \
         --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_R) \
         --build-arg itag=$(DT_R) -f $(DF_TM_MASTER) . > build_$(DI_TM_MASTER).log
 	touch $(DI_TM_MASTER).image
 
-$(DI_TM_DEVEL).image: $(DF_TM_DEVEL) $(DI_TM_MASTER)
-	@echo ">>> "Building $(D_REP)/$@:$(DT_TM_DEVEL)
-	$(DB) -t $(D_REP)/$(DI_TM_DEVEL):$(DT_TM_DEVEL) $(DB_FLAGS)  \
+$(DI_TM_DEVEL).image: $(DF_TM_DEVEL) $(DI_TM_MASTER).image
+	@echo ">>> "Building $(D_REP)/$(DI_TM_DEVEL):$(DT_TM_DEVEL)
+	$(DB) -t $(D_REP)/$(DI_TM_DEVEL):$(DT_TM_DEVEL) $(DB_OPTS)  \
         --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_TM_MASTER) \
         --build-arg itag=$(DT_TM_MASTER) -f $(DF_TM_DEVEL) . > build_$(DI_TM_DEVEL).log
 	touch $(DI_TM_DEVEL).image
@@ -78,7 +83,7 @@ $(DI_TM_DEVEL).image: $(DF_TM_DEVEL) $(DI_TM_MASTER)
 
 .image.push:
 	@echo ">>> pushing $(D_REP)/$*"
-#	$(DC) push $(D_REP)/$* > push_$*.log
+	$(DC) push $(D_REP)/$*
 	@touch $@
 
 .dfile2.image:
@@ -87,7 +92,9 @@ $(DI_TM_DEVEL).image: $(DF_TM_DEVEL) $(DI_TM_MASTER)
 	@touch $@
 
 clean:
-	@echo Deleting all images $(D_IMAGES)
+	@echo Deleting all images $(D_IMAGES_IMG)
 	@rm -f $(D_IMAGES_IMG)
 	@echo Deleting all pushes $(D_PUSH)
 	@rm -f $(D_PUSH)
+	@echo Deleting all logs
+	@rm -f *.log
