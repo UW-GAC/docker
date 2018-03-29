@@ -5,7 +5,7 @@ FROM uwgac/$base_name:$itag
 
 ARG r_version
 # ==================
-# non-parallel version
+# sequential version
 # ==================
 # create link to appropriate R
 RUN if [ -d /usr/local/bin/R ]; then \
@@ -18,7 +18,7 @@ RUN ln -s /usr/local/R-$r_version/lib/R/bin/R /usr/local/bin/R && \
       ln -s /usr/local/R-$r_version/lib/R/bin/Rscript /usr/local/bin/Rscript
 
 ENV ANALYSIS_PIPELINE_BRANCH=master
-RUN echo "Building non-parallel version of  $ANALYSIS_PIPELINE_BRANCH ..."
+RUN echo "Building sequential version of  $ANALYSIS_PIPELINE_BRANCH ..."
 
 # create an R script to install the topmed packages
 RUN echo '#!/usr/local/bin/Rscript --vanilla --no-save --slave' > /tmp/installtopmed.R && \
@@ -33,18 +33,18 @@ RUN Rscript /tmp/installtopmed.R
 
 # install topmed pipeline
 ENV ANALYSIS_PIPELINE_BRANCH=master
-RUN mkdir /usr/local/src/topmed_$ANALYSIS_PIPELINE_BRANCH && \
-    cd /usr/local/src/topmed_$ANALYSIS_PIPELINE_BRANCH && \
+RUN mkdir /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s && \
+    cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s && \
     git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git && \
-    cd /usr/local/src/topmed_$ANALYSIS_PIPELINE_BRANCH/analysis_pipeline && \
+    cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s/analysis_pipeline && \
     R CMD INSTALL TopmedPipeline
 
 # create a link analysis_pipeline
-RUN if [ -d /usr/local/analysis_pipeline ]; then \
-        unlink /usr/local/analysis_pipeline; \
+RUN if [ -d /usr/local/analysis_pipeline_s ]; then \
+        unlink /usr/local/analysis_pipeline_s; \
     fi
 
-RUN ln -s /usr/local/src/topmed_$ANALYSIS_PIPELINE_BRANCH/analysis_pipeline /usr/local/analysis_pipeline
+RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s/analysis_pipeline /usr/local/analysis_pipeline_s
 
 # ==================
 # parallel version
@@ -81,8 +81,12 @@ RUN mkdir /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p && \
     R CMD INSTALL TopmedPipeline
 
 # create a link analysis_pipeline
-RUN if [ -d /usr/local/analysis_pipeline_${ANALYSIS_PIPELINE_BRANCH}p ]; then \
-        unlink /usr/local/analysis_pipeline_${ANALYSIS_PIPELINE_BRANCH}p; \
+RUN if [ -d /usr/local/analysis_pipeline ]; then \
+        unlink /usr/local/analysis_pipeline; \
     fi
 
-RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline /usr/local/analysis_pipeline_${ANALYSIS_PIPELINE_BRANCH}p
+RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline /usr/local/analysis_pipeline
+
+# add the python scripts to enable outside world access
+ADD docker2aws.py /usr/local/bin
+ADD ap2batch.py /usr/local/bin
