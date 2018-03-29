@@ -17,6 +17,7 @@ DI_R = r-$(R_VERSION)-mkl
 DI_APPS = apps
 DI_TM_MASTER = topmed-master
 DI_TM_DEVEL = topmed-devel
+DI_TM_RB = topmed-roybranch
 
 # docker files
 DF_BASE_OS = ubuntu
@@ -25,6 +26,7 @@ DF_APPS = apps.dfile
 DF_R = r-mkl.dfile
 DF_TM_MASTER = topmed-master.dfile
 DF_TM_DEVEL = topmed-devel.dfile
+DF_TM_RB = topmed-roybranch.dfile
 
 # docker image tags
 DT_OS = latest
@@ -32,8 +34,9 @@ DT_R = latest
 DT_APPS = latest
 DT_TM_MASTER = latest
 DT_TM_DEVEL = latest
+DT_TM_RB = latest
 
-D_IMAGES = $(DI_OS) $(DI_APPS) $(DI_R) $(DI_TM_MASTER) $(DI_TM_DEVEL)
+D_IMAGES = $(DI_OS) $(DI_APPS) $(DI_R) $(DI_TM_MASTER) $(DI_TM_DEVEL) $(DI_TM_RB)
 D_PUSH = $(addsuffix .push,$(D_IMAGES))
 D_IMAGES_IMG = $(addsuffix .image,$(D_IMAGES))
 .PHONY:  all
@@ -78,6 +81,12 @@ $(DI_TM_DEVEL).image: $(DF_TM_DEVEL) $(DI_TM_MASTER).image
         --build-arg itag=$(DT_TM_MASTER) -f $(DF_TM_DEVEL) . > build_$(DI_TM_DEVEL).log
 	touch $(DI_TM_DEVEL).image
 
+$(DI_TM_RB).image: $(DF_TM_RB) $(DI_TM_DEVEL).image
+	@echo ">>> "Building $(D_REP)/$(Dt_TM_RB):$(DT_TM_RB)
+	$(DB) -t $(D_REP)/$(DI_TM_RB):$(DT_TM_RB) $(DB_OPTS)  \
+        --build-arg base_name=$(DI_TM_DEVEL) \
+        --build-arg itag=$(DT_TM_RB) -f $(DF_TM_RB) . > build_$(DI_TM_RB).log
+	touch $(DI_TM_RB).image
 
 .SUFFIXES : .dfile2 .image .push
 
