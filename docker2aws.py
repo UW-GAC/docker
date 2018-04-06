@@ -91,6 +91,15 @@ if not os.path.isfile( secfile ):
 pInfo( "CD to " + workDir )
 os.chdir(workDir)
 
+# add --cluster_type AWS_Batch if not there
+pl = parameters.split()
+ct = "--cluster_type"
+ab = "AWS_Batch"
+if ct not in pl:
+    pl.append(ct)
+    pl.append(ab)
+parameters = ' '.join(pl)
+
 # execute the pipeline command
 cmd = 'python ' + pipepath + '/' + analysis + '.py' + ' ' + parameters
 pInfo( "Executing " + cmd )
