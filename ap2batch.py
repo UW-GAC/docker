@@ -2,19 +2,48 @@
 import     time
 import     csv
 import     sys
-import  os.path
-import  os
-import  subprocess
-from    argparse import ArgumentParser
-from     datetime import datetime, timedelta
+import     os.path
+import     os
+import     subprocess
+from       argparse import ArgumentParser
+from       datetime import datetime, timedelta
+import     shlex
 
 # init globals
 version='2.0'
 msgErrPrefix='>>> Error '
 msgInfoPrefix='>>> Info '
 debugPrefix='>>> Debug '
-# def logger class
 
+# get mem in kb
+def getMemory(pid):
+    file = "/proc/" + str(pid) + "/smaps"
+    mem = 0
+    memfile = open(file, "r")
+    for line in memfile:
+        if "Rss:" in line:
+            memsect = int(line.split()[1])
+            mem = mem + memsect
+    return mem
+
+# poll sub process
+def pollSubprocess(process, polltime):
+    # sudo awk '/Rss:/{ sum += $2 } END { print sum }' /proc/3596/smaps
+    # process.returncode
+    pid = process.pid
+    maxMem = 0
+    while process.poll() == None:
+        # get memory
+        mem = getMemory(pid)
+        if mem > maxMem:
+            maxMem = mem
+        # sleep
+        time.sleep(polltime)
+    # return status and max mem (in GB)
+    rd = {'status': process.returncode, 'maxmem': float(maxMem)/1000000.}
+    return rd
+
+# def logger class
 class Logger(object):
     def __init__(self, logfile):
         self.terminal = sys.stdout
@@ -28,9 +57,20 @@ class Logger(object):
         #this flush method is needed for python 3 compatibility.
         #this handles the flush command by doing nothing.
         #you might want to specify some extra behavior here.
+        self.log.flush()
         pass
 
+    def __del__(self):
+        self.write("\n")    # in case we really append next time
+        self.log.close()
+
 # def functions
+def flush():
+    if trace:
+        myLogger.flush()
+    else:
+        sys.stdout.flush()
+
 def pInfo(msg):
     tmsg=time.asctime()
     print msgInfoPrefix+tmsg+": "+msg
@@ -50,8 +90,8 @@ def Summary(hdr):
     print( '\tR driver args: ' + rargs)
     if logfile != "":
         print( '\tLog file: ' + fullLog)
-    if trace != "":
-        print( '\tTrace file: ' + trace)
+        if trace == 1:
+            print( '\tTrace file: ' + fullTrace)
     print( '\tSystem parameters:' )
     print( '\t\tWorking directory: ' + workdir )
     if bind == 1:
@@ -70,6 +110,10 @@ def Summary(hdr):
         print( '\tSGE Task ID: ' +  os.environ['SGE_TASK_ID'])
     else:
         print( '\tArray type: False')
+    if os.getenv('AWS_ENV') == 'yes':
+        print( '\tAWS Instance type: ' + os.getenv('AWS_INSTANCE_TYPE') )
+        print( '\tAWS Instance id: ' + os.getenv('AWS_INSTANCE_ID') )
+        print( '\tAWS AMI: ' + os.getenv('AWS_AMI') )
     tbegin=time.asctime()
     print( '\tTime: ' + tbegin + "\n" )
 
@@ -97,11 +141,13 @@ parser.add_argument( "-P", "--printonly", type = int, default = 0,
                      help = "Print summary without executing [default: 0]" )
 parser.add_argument( "-l", "--logfile", default = "",
                      help = "log filename" )
-parser.add_argument( "-t", "--mounttmo", help = "mount timeout", default = "10.0" )
+parser.add_argument( "-T", "--mounttmo", help = "mount timeout", default = "10.0" )
 parser.add_argument( "-a", "--arraytype", type = int, default = 0,
                      help = "Batch job is array type [default: 0]" )
-parser.add_argument( "-T", "--tracefile", default = "",
-                     help = "Trace output of this script to a file in workdir [default: no tracing]" )
+parser.add_argument( "-t", "--tracefile", type = int, default = 1,
+                     help = "Enable trace file (if logging) [default: 1]" )
+parser.add_argument( "--polltime", type = int, default = 5,
+                     help = "Time of subprocess polling loop [default: 5]" )
 parser.add_argument( "--version", action="store_true", default = False,
                      help = "Print version of " + __file__ )
 
@@ -120,6 +166,7 @@ po = args.printonly
 mounttmo = args.mounttmo
 arrayType = args.arraytype
 trace = args.tracefile
+polltime = args.polltime
 # version
 if args.version:
     print(__file__ + " version: " + version)
@@ -132,11 +179,6 @@ if workdir == None:
 if not os.path.isdir( workdir ):
     pError( "Work directory " + workdir + " does not exist" )
     sys.exit(2)
-# trace
-if trace != "":
-    trace = workdir + "/" + trace
-    sys.stderr = sys.stdout = Logger(trace)
-
 # change working directory
 os.chdir(workdir)
 pInfo( "Changed working directory to " + workdir )
@@ -160,14 +202,28 @@ if arrayType:
     taskID = str(int(arrayIndex) + int(firstSegIndex))
     os.environ['SGE_TASK_ID'] = taskID
 
-# check for logile; if so, make it a full path to working directory
+# check for logile and trace file; if so, make it a full path to working directory
 logExt = ".log"
+
 if logfile != "":
     if arrayType:
-        logfile = logfile + "_" + taskID + logExt
+        fullLog = logfile + "_" + taskID + logExt
     else:
-        logfile = logfile + logExt
-    fullLog = workdir + "/" + logfile
+        fullLog = logfile + logExt
+    fullLog = workdir + "/" + fullLog
+    # trace
+    traceExt = ".trace"
+    if trace == 1:
+        if arrayType:
+            fullTrace = logfile + "_" + taskID + traceExt
+        else:
+            fullTrace = logfile + traceExt
+    fullTrace = workdir + "/" + fullTrace
+    myLogger = Logger(fullTrace)
+    sys.stderr = sys.stdout = myLogger
+else:
+    trace = 0
+
 
 # summarize and check for required params
 Summary("Summary of " + __file__)
@@ -179,7 +235,7 @@ if po == 0:
 # mount
 if bind == 0:
     pDebug( "mount tmo: " + tmo + " mount command: " + mount )
-    sys.stdout.flush()
+    flush()
     mtmo = "timeout " + tmo + " " + mount
     pInfo("Mount command data volume: " + mtmo)
     if po == 0:
@@ -205,7 +261,7 @@ if po == 0:
 # execute the R control file
 cmd = rdriver + ' ' + rargs
 pInfo( "Executing " + cmd )
-sys.stdout.flush()
+flush()
 if po == 0:
     # redirect stdout to logile
     if logfile != "":
@@ -213,12 +269,17 @@ if po == 0:
         serr = sys.stderr
         flog = open ( fullLog, 'w' )
         sys.stderr = sys.stdout = flog
-    process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
-    status = process.wait()
+    process = subprocess.Popen(shlex.split(cmd), stdout=sys.stdout, stderr=sys.stderr,
+                               shell=False)
+    rd = pollSubprocess(process, polltime)
+    status = rd['status']
+    maxmem = rd['maxmem']
     # redirect stdout back
     if logfile != "":
         sys.stdout = sout
         sys.stderr = serr
+    pInfo("Maximum memory (GB): " + str(maxmem))
+    flush()
     if status:
         pError( "Executing R driver file failed (" + str(status) + ")" )
         sys.exit(2)
