@@ -80,3 +80,6 @@ RUN ln -s /usr/local/src/locuszoom-standalone /usr/local/locuszoom-standalone
 RUN pip install pip --upgrade && \
     pip install awscli --upgrade && \
     pip install boto3 --upgrade
+
+# install python requests
+RUN pip install requests
