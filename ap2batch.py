@@ -7,40 +7,24 @@ import     os
 import     subprocess
 from       argparse import ArgumentParser
 from       datetime import datetime, timedelta
-import     shlex
+import     requests
 
 # init globals
 version='2.0'
-msgErrPrefix='>>> Error '
-msgInfoPrefix='>>> Info '
-debugPrefix='>>> Debug '
+msgErrPrefix='>>> Error (' + os.path.basename(__file__) +') '
+msgInfoPrefix='>>> Info (' + os.path.basename(__file__) +') '
+debugPrefix='>>> Debug (' + os.path.basename(__file__) +') '
 
-# get mem in kb
-def getMemory(pid):
-    file = "/proc/" + str(pid) + "/smaps"
-    mem = 0
-    memfile = open(file, "r")
-    for line in memfile:
-        if "Rss:" in line:
-            memsect = int(line.split()[1])
-            mem = mem + memsect
-    return mem
-
-# poll sub process
-def pollSubprocess(process, polltime):
-    # sudo awk '/Rss:/{ sum += $2 } END { print sum }' /proc/3596/smaps
-    # process.returncode
-    pid = process.pid
-    maxMem = 0
-    while process.poll() == None:
-        # get memory
-        mem = getMemory(pid)
-        if mem > maxMem:
-            maxMem = mem
-        # sleep
-        time.sleep(polltime)
-    # return status and max mem (in GB)
-    rd = {'status': process.returncode, 'maxmem': float(maxMem)/1000000.}
+# def aws env
+def getAWSEnv():
+    baseURL = 'http://169.254.169.254/latest/meta-data/'
+    try:
+        ami = requests.get(baseURL+'ami-id', timeout=1).text
+        it = requests.get(baseURL+'instance-type', timeout=1).text
+        ii = requests.get(baseURL+'instance-id', timeout=1).text
+        rd = {'ami_id': ami, 'instance_type': it, 'instance_id': id}
+    except:
+        rd = {'ami_id': 'n/a', 'instance_type': 'n/a', 'instance_id': 'n/a'}
     return rd
 
 # def logger class
@@ -110,10 +94,10 @@ def Summary(hdr):
         print( '\tSGE Task ID: ' +  os.environ['SGE_TASK_ID'])
     else:
         print( '\tArray type: False')
-    if os.getenv('AWS_ENV') == 'yes':
-        print( '\tAWS Instance type: ' + os.getenv('AWS_INSTANCE_TYPE') )
-        print( '\tAWS Instance id: ' + os.getenv('AWS_INSTANCE_ID') )
-        print( '\tAWS AMI: ' + os.getenv('AWS_AMI') )
+    ae = getAWSEnv()
+    print( '\tAWS Instance type: ' + ae['instance_type'] )
+    print( '\tAWS Instance id: ' + ae['instance_id'] )
+    print( '\tAWS AMI: ' + ae['ami_id'] )
     tbegin=time.asctime()
     print( '\tTime: ' + tbegin + "\n" )
 
@@ -269,16 +253,12 @@ if po == 0:
         serr = sys.stderr
         flog = open ( fullLog, 'w' )
         sys.stderr = sys.stdout = flog
-    process = subprocess.Popen(shlex.split(cmd), stdout=sys.stdout, stderr=sys.stderr,
-                               shell=False)
-    rd = pollSubprocess(process, polltime)
-    status = rd['status']
-    maxmem = rd['maxmem']
+    process = subprocess.Popen(cmd, stdout=sys.stdout, stderr=sys.stderr, shell=True)
+    status = process.wait()
     # redirect stdout back
     if logfile != "":
         sys.stdout = sout
         sys.stderr = serr
-    pInfo("Maximum memory (GB): " + str(maxmem))
     flush()
     if status:
         pError( "Executing R driver file failed (" + str(status) + ")" )
