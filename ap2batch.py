@@ -22,7 +22,7 @@ def getAWSEnv():
         ami = requests.get(baseURL+'ami-id', timeout=1).text
         it = requests.get(baseURL+'instance-type', timeout=1).text
         ii = requests.get(baseURL+'instance-id', timeout=1).text
-        rd = {'ami_id': ami, 'instance_type': it, 'instance_id': id}
+        rd = {'ami_id': ami, 'instance_type': it, 'instance_id': ii}
     except:
         rd = {'ami_id': 'n/a', 'instance_type': 'n/a', 'instance_id': 'n/a'}
     return rd
