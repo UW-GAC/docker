@@ -27,9 +27,7 @@ RUN echo '#!/usr/local/bin/Rscript --vanilla --no-save --slave' > /tmp/installto
   echo 'devtools::install_git("git://github.com/zhengxwen/SeqArray.git")' >> /tmp/installtopmed.R  && \
   echo 'devtools::install_git("git://github.com/zhengxwen/SNPRelate.git")' >> /tmp/installtopmed.R  && \
   echo 'devtools::install_git("git://github.com/smgogarten/SeqVarTools.git")' >> /tmp/installtopmed.R && \
-  echo 'devtools::install_git("git://github.com/smgogarten/GENESIS.git")' >> /tmp/installtopmed.R  && \
-  echo 'devtools::install_git("git://github.com/UW-GAC/genesis2_tests.git")' >> /tmp/installtopmed.R  && \
-  echo 'devtools::install_git("git://github.com/UW-GAC/genesis2.git")' >> /tmp/installtopmed.R
+  echo 'devtools::install_git("git://github.com/smgogarten/GENESIS.git")' >> /tmp/installtopmed.R
 
 # execute R script to install devel topmed packages
 RUN Rscript /tmp/installtopmed.R
@@ -71,9 +69,7 @@ RUN echo '#!/usr/local/bin/Rscript --vanilla --no-save --slave' > /tmp/installto
   echo 'devtools::install_git("git://github.com/zhengxwen/SeqArray.git")' >> /tmp/installtopmed.R  && \
   echo 'devtools::install_git("git://github.com/zhengxwen/SNPRelate.git")' >> /tmp/installtopmed.R  && \
   echo 'devtools::install_git("git://github.com/smgogarten/SeqVarTools.git")' >> /tmp/installtopmed.R && \
-  echo 'devtools::install_git("git://github.com/smgogarten/GENESIS.git")' >> /tmp/installtopmed.R  && \
-  echo 'devtools::install_git("git://github.com/UW-GAC/genesis2_tests.git")' >> /tmp/installtopmed.R  && \
-  echo 'devtools::install_git("git://github.com/UW-GAC/genesis2.git")' >> /tmp/installtopmed.R
+  echo 'devtools::install_git("git://github.com/smgogarten/GENESIS.git")' >> /tmp/installtopmed.R
 
 # execute R script to install devel topmed packages
 RUN Rscript /tmp/installtopmed.R
