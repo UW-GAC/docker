@@ -17,6 +17,16 @@ msgInfoPrefix='>>> Info (' + os.path.basename(__file__) +')'
 debugPrefix='>>> Debug (' + os.path.basename(__file__) +')'
 
 # def functions
+def add2parameters(inparams,inopt,inoptVal):
+    params=inparams
+    # if inopt not already defined add to params
+    if inopt not in params:
+        params=params + " " + inopt
+        if inoptVal is not None:
+            params=params + " " + inoptVal
+    return params
+
+
 def pInfo(msg):
     tmsg=time.asctime()
     print msgInfoPrefix+tmsg+": "+msg
@@ -36,8 +46,8 @@ def Summary(hdr):
     print( '\tWork dir: ' + workdir )
     print( '\tAnalysis: ' + analysis)
     print( '\tLocal security file: ' + localsecurity)
-    print( '\tSecurity in docker: ' + analysis)
-    print( '\tAnalysis: ' + analysis)
+    print( '\tSecurity in docker: ' + dockersecurity)
+    print( '\tAnalysis parameters: ' + parameters)
     print( '\tAnalysis pipeline path: ' + pipepath)
 
     print( '\tDocker:' )
@@ -59,6 +69,7 @@ defProjectDocker = "/projects"
 defDockerImage = "uwgac/topmed-roybranch"
 defDockerScript = "docker2aws.py"
 defPipeline = "/usr/local/analysis_pipeline"
+defName = "ap_batch"
 
 # command line parser
 parser = ArgumentParser( description = "Helper function to execute analysis pipeline via docker" )
@@ -67,7 +78,7 @@ parser.add_argument( "-w", "--workdir",
 parser.add_argument( "-a", "--analysis",
                      help = "analysis to run (e.g., assoc)" )
 parser.add_argument( "-p", "--parameters",
-                     help = "analysis parameters" )
+                     help = 'analysis parameters(e.g., "single assoc.cfg --chromosomes 1-4")')
 parser.add_argument( "-i", "--image", default = defDockerImage,
                      help = "docker image to initiate pipeline execution [default: " + defDockerImage + "]")
 parser.add_argument( "-s", "--script", default = defDockerScript,
@@ -86,9 +97,9 @@ parser.add_argument( "--localsecurity", default = defLocalSecurity,
 parser.add_argument( "--dockersecurity", default = defDockerSecurity,
                      help = "security file location in docker [default: " + defDockerSecurity + "]" )
 parser.add_argument( "-e","--existingcontainer", action="store_true", default = False,
-                     help = "start an existing container [default: False" )
-parser.add_argument( "-n","--name", default = "ap_batch",
-                     help = "name of container [default: False" )
+                     help = "start an existing container [default: False]" )
+parser.add_argument( "-n","--name", default = defName,
+                     help = "name of container [default: " + defName + "]" )
 parser.add_argument( "-k", "--keepcontainer", action="store_true", default = False,
                      help = "Keep the container and do not stop it [default: False]" )
 parser.add_argument( "-V", "--verbose", action="store_true", default = False,
@@ -97,7 +108,10 @@ parser.add_argument( "-S", "--summary", action="store_true", default = False,
                      help = "Print summary prior to executing [default: False]" )
 parser.add_argument( "--version", action="store_true", default = False,
                      help = "Print version of " + __file__ )
-
+parser.add_argument( "-P", "--printonly", action="store_true", default = False,
+                     help = "Print summary without executing [default: False]" )
+parser.add_argument( "-C","--clustercfg", default = None,
+                     help = "name of cluster cfg file in the working directory [default: None]" )
 
 args = parser.parse_args()
 # set result of arg parse_args
@@ -117,6 +131,8 @@ keepcontainer = args.keepcontainer
 verbose = args.verbose
 pipepath = args.pipepath
 summary = args.summary
+printonly = args.printonly
+clustercfg = args.clustercfg
 # version
 if args.version:
     print(__file__ + " version: " + version)
@@ -143,6 +159,18 @@ if not existingcontainer:
         # find /projects in the workdir and use that root
         dirlist = workdir.split("/")
         plocal = "/".join(dirlist[0:dirlist.index('projects')+1])
+
+    # if printonly, add to parameters
+    if printonly:
+        parameters =  add2parameters(parameters,"--print_only",None)
+
+    # if clusterconfig file is passed, add to parameters
+    if clustercfg is not None:
+        parameters = add2parameters(parameters,"--cluster_file",clustercfg)
+
+    # if verbose, add to parameters
+    if verbose:
+        parameters = add2parameters(parameters,"--verbose",None)
 else:
     parameters = "N/A"
     analysis = "N/A"
