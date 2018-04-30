@@ -82,7 +82,7 @@ $(DI_TM_DEVEL).image: $(DF_TM_DEVEL) $(DI_TM_MASTER).image
 	touch $(DI_TM_DEVEL).image
 
 $(DI_TM_RB).image: $(DF_TM_RB) $(DI_TM_DEVEL).image
-	@echo ">>> "Building $(D_REP)/$(Dt_TM_RB):$(DT_TM_RB)
+	@echo ">>> "Building $(D_REP)/$(DT_TM_RB):$(DT_TM_RB)
 	$(DB) -t $(D_REP)/$(DI_TM_RB):$(DT_TM_RB) $(DB_OPTS)  \
         --build-arg base_name=$(DI_TM_DEVEL) \
         --build-arg itag=$(DT_TM_RB) -f $(DF_TM_RB) . > build_$(DI_TM_RB).log
