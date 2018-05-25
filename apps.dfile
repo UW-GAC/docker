@@ -2,15 +2,6 @@ ARG base_name=ubuntu-16.04-hpc
 ARG itag=latest
 FROM uwgac/$base_name:$itag
 
-# add some users
-RUN groupadd -g 1002 topmed && \
-    adduser --system --uid 1000 --ingroup topmed --disabled-password --gecos GECOS  ubuntu && \
-    adduser --system --uid 1001 --ingroup topmed --disabled-password --gecos GECOS  kuraisa
-
-# create an .aws directory in everyone's home
-RUN mkdir ~/.aws && \
-    mkdir /home/ubuntu/.aws && \
-    mkdir /home/kuraisa/.aws
 
 # need curses5
 Run apt-get update && apt-get install -y libncurses5-dev
@@ -77,9 +68,26 @@ RUN if [ -d /usr/local/locuszoom-standalone ]; then \
 RUN ln -s /usr/local/src/locuszoom-standalone /usr/local/locuszoom-standalone
 
 # install aws cli and boto3
-RUN pip install pip --upgrade && \
-    pip install awscli --upgrade && \
-    pip install boto3 --upgrade
+RUN pip install pip --upgrade
+RUN pip install awscli --upgrade
+RUN pip install boto3 --upgrade
 
 # install python requests
 RUN pip install requests
+
+# install sudo
+RUN apt-get update && apt-get install -y sudo && apt-get install -y curl
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# add some users
+RUN groupadd -g 1002 topmed && \
+    useradd -m -s /bin/bash -r -u 1000 -g topmed ubuntu && \
+    useradd -m -s /bin/bash -r -u 1001 -g topmed kuraisa
+
+RUN adduser ubuntu sudo
+RUN adduser kuraisa sudo
+
+# create an .aws directory in everyone's home
+RUN mkdir ~/.aws && \
+    mkdir /home/ubuntu/.aws && \
+    mkdir /home/kuraisa/.aws
