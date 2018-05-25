@@ -2,8 +2,9 @@ DC = docker
 DB = $(DC) build
 D_REP = uwgac
 OS_VERSION = 16.04
-R_VERSION = 3.4.3
+R_VERSION = 3.5.0
 MKL_VERSION = 2018.1.163
+RS_VERSION = 1.1.447
 DB_FLAGS =
 ifeq ($(cfg),cache)
 	CACHE_OPT =
@@ -18,6 +19,7 @@ DI_APPS = apps
 DI_TM_MASTER = topmed-master
 DI_TM_DEVEL = topmed-devel
 DI_TM_RB = topmed-roybranch
+DI_TM_RS = topmed-rstudio
 
 # docker files
 DF_BASE_OS = ubuntu
@@ -27,6 +29,7 @@ DF_R = r-mkl.dfile
 DF_TM_MASTER = topmed-master.dfile
 DF_TM_DEVEL = topmed-devel.dfile
 DF_TM_RB = topmed-roybranch.dfile
+DF_TM_RS = topmed-rstudio.dfile
 
 # docker image tags
 DT_OS = latest
@@ -35,8 +38,9 @@ DT_APPS = latest
 DT_TM_MASTER = latest
 DT_TM_DEVEL = latest
 DT_TM_RB = latest
+DT_TM_RS = latest
 
-D_IMAGES = $(DI_OS) $(DI_APPS) $(DI_R) $(DI_TM_MASTER) $(DI_TM_DEVEL) $(DI_TM_RB)
+D_IMAGES = $(DI_OS) $(DI_APPS) $(DI_R) $(DI_TM_MASTER) $(DI_TM_DEVEL) $(DI_TM_RB) $(DI_TM_RS)
 D_PUSH = $(addsuffix .push,$(D_IMAGES))
 D_IMAGES_IMG = $(addsuffix .image,$(D_IMAGES))
 .PHONY:  all
@@ -82,11 +86,18 @@ $(DI_TM_DEVEL).image: $(DF_TM_DEVEL) $(DI_TM_MASTER).image
 	touch $(DI_TM_DEVEL).image
 
 $(DI_TM_RB).image: $(DF_TM_RB) $(DI_TM_DEVEL).image
-	@echo ">>> "Building $(D_REP)/$(DT_TM_RB):$(DT_TM_RB)
+	@echo ">>> "Building $(D_REP)/$(DI_TM_RB):$(DT_TM_RB)
 	$(DB) -t $(D_REP)/$(DI_TM_RB):$(DT_TM_RB) $(DB_OPTS)  \
-        --build-arg base_name=$(DI_TM_DEVEL) \
+        --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_TM_DEVEL) \
         --build-arg itag=$(DT_TM_RB) -f $(DF_TM_RB) . > build_$(DI_TM_RB).log
 	touch $(DI_TM_RB).image
+
+$(DI_TM_RS).image: $(DF_TM_RS) $(DI_TM_RB).image
+	@echo ">>> "Building $(D_REP)/$(DI_TM_RS):$(DT_TM_RS)
+	$(DB) -t $(D_REP)/$(DI_TM_RS):$(DT_TM_RS) $(DB_OPTS)  \
+        --build-arg rs_version=$(RS_VERSION) --build-arg base_name=$(DI_TM_DEVEL) \
+        --build-arg itag=$(DT_TM_RS) -f $(DF_TM_RS) . > build_$(DI_TM_RS).log
+	touch $(DI_TM_RS).image
 
 .SUFFIXES : .dfile2 .image .push
 
