@@ -6,7 +6,7 @@ ARG r_version=3.4.3
 # download R
 RUN mkdir /usr/local/src/R && \
     cd /usr/local/src/R && \
-    wget --no-check-certificate https://cran.fhcrc.org/src/base/R-3/R-$r_version.tar.gz && \
+    wget --no-check-certificate https://cran.r-project.org/src/base/R-3/R-$r_version.tar.gz && \
     tar zxf R-$r_version.tar.gz
 
 # create the R target install
