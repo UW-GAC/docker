@@ -45,8 +45,6 @@ def Summary(hdr):
     print( '\t\tBind-mount container: ' + pdocker )
     print( '\t\tWorking directory: ' + workdir_a )
     print( '\t\tNumber of threads: ' + threads )
-    tbegin=time.asctime()
-    print( '\tTime: ' + tbegin + "\n" )
 
 defCreateOpts = "-it"
 defDockerImage = "uwgac/topmed-roybranch"
@@ -167,11 +165,13 @@ else:
 startCMD = "docker start -i " + name
 if verbose:
     pInfo("Docker start cmd: " + startCMD)
+pInfo('>>>Analysis begins ...')
 process = subprocess.Popen(startCMD, stdout=sys.stdout, stderr=sys.stderr, shell=True)
 status = process.wait()
 if status:
     pError("Docker start command failed:\n\t" + str(status) )
     sys.exit(2)
+pInfo('>>>Analysis completed successfully')
 
 if verbose:
     pInfo("Python script " + __file__ + " completed without errors")
