@@ -82,7 +82,7 @@ parser.add_argument( "-p", "--parameters",
 parser.add_argument( "-i", "--image", default = defDockerImage,
                      help = "docker image to initiate pipeline execution [default: " + defDockerImage + "]")
 parser.add_argument( "-s", "--script", default = defDockerScript,
-                     help = "script in docker image to initiate pipeline execution [default: " + \
+                     help = "script in docker image to initiate pipeline execution [default: " +
                              defDockerScript + "]")
 parser.add_argument( "-c", "--createopts", default = defCreateOpts,
                      help = "docker create container options [default: " + defCreateOpts + "]")
