@@ -62,10 +62,10 @@ RUN \
 RUN cd /usr/local/src && \
    git clone --single https://github.com/UW-GAC/locuszoom-standalone
 
-RUN if [ -d /usr/local/locuszoom-standalone ]; then \
-       unlink /usr/local/locuszoom-standalone; \
+RUN if [ -d /usr/local/bin/locuszoom ]; then \
+       unlink /usr/local/bin/locuszoom; \
     fi
-RUN ln -s /usr/local/src/locuszoom-standalone /usr/local/locuszoom-standalone
+RUN ln -s /usr/local/src/locuszoom-standalone/bin/locuszoom /usr/local/bin/locuszoom
 
 # install aws cli and boto3
 RUN pip install pip --upgrade
