@@ -88,5 +88,5 @@ RUN if [ -d /usr/local/analysis_pipeline ]; then \
 RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline /usr/local/analysis_pipeline
 
 # add the python scripts to enable outside world access
-ADD docker2aws.py /usr/local/bin
+ADD docker2ap.py /usr/local/bin
 ADD ap2batch.py /usr/local/bin
