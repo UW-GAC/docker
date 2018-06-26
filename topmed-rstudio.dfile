@@ -8,6 +8,10 @@ ARG rs_version
 RUN useradd -m -s /bin/bash -r -u 2001 -g topmed rstudio
 RUN (echo "rstudio:rstudio"|chpasswd)
 
+# add locale
+RUN apt-get update && apt-get install -y locales
+RUN locale-gen en_US.UTF-8
+
 # install rstudio
 RUN apt-get update && apt-get install -y \
   net-tools \
