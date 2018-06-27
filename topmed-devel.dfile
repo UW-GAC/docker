@@ -20,25 +20,15 @@ RUN ln -s /usr/local/R-$r_version/lib/R/bin/R /usr/local/bin/R && \
 ENV ANALYSIS_PIPELINE_BRANCH=devel
 RUN echo "Building sequential version of  $ANALYSIS_PIPELINE_BRANCH ..."
 
-# create an R script to install the devel topmed packages
-RUN echo '#!/usr/local/bin/Rscript --vanilla --no-save --slave' > /tmp/installtopmed.R && \
-  echo 'install.packages("Matrix", rep="https://ftp.osuosl.org/pub/cran/")' >> /tmp/installtopmed.R && \
-  echo 'devtools::install_git("git://github.com/zhengxwen/gdsfmt.git")' >> /tmp/installtopmed.R  && \
-  echo 'devtools::install_git("git://github.com/zhengxwen/SeqArray.git")' >> /tmp/installtopmed.R  && \
-  echo 'devtools::install_git("git://github.com/zhengxwen/SNPRelate.git")' >> /tmp/installtopmed.R  && \
-  echo 'devtools::install_git("git://github.com/smgogarten/SeqVarTools.git")' >> /tmp/installtopmed.R && \
-  echo 'devtools::install_git("git://github.com/smgogarten/GENESIS.git")' >> /tmp/installtopmed.R
-
-# execute R script to install devel topmed packages
-RUN Rscript /tmp/installtopmed.R
-
 # install devel topmed pipeline
 ENV ANALYSIS_PIPELINE_BRANCH=devel
 RUN mkdir /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s && \
   cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s && \
-  git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git && \
-  cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s/analysis_pipeline && \
-  R CMD INSTALL TopmedPipeline
+  git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git
+
+# execute R script to install topmed packages
+RUN cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s/analysis_pipeline && \
+    Rscript --vanilla --no-save --slave install_packages.R
 
 # create a link analysis_pipeline
 RUN if [ -d /usr/local/analysis_pipeline_s ]; then \
@@ -62,25 +52,15 @@ RUN if [ -f /usr/local/bin/Rscript ]; then \
 RUN ln -s /usr/local/R-$p_version/lib/R/bin/R /usr/local/bin/R && \
     ln -s /usr/local/R-$p_version/lib/R/bin/Rscript /usr/local/bin/Rscript
 
-# create an R script to install the devel topmed packages
-RUN echo '#!/usr/local/bin/Rscript --vanilla --no-save --slave' > /tmp/installtopmed.R && \
-  echo 'install.packages("Matrix", rep="https://ftp.osuosl.org/pub/cran/")' >> /tmp/installtopmed.R && \
-  echo 'devtools::install_git("git://github.com/zhengxwen/gdsfmt.git")' >> /tmp/installtopmed.R  && \
-  echo 'devtools::install_git("git://github.com/zhengxwen/SeqArray.git")' >> /tmp/installtopmed.R  && \
-  echo 'devtools::install_git("git://github.com/zhengxwen/SNPRelate.git")' >> /tmp/installtopmed.R  && \
-  echo 'devtools::install_git("git://github.com/smgogarten/SeqVarTools.git")' >> /tmp/installtopmed.R && \
-  echo 'devtools::install_git("git://github.com/smgogarten/GENESIS.git")' >> /tmp/installtopmed.R
-
-# execute R script to install devel topmed packages
-RUN Rscript /tmp/installtopmed.R
-
 # install devel topmed pipeline
 ENV ANALYSIS_PIPELINE_BRANCH=devel
 RUN mkdir /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p && \
   cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p && \
-  git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git && \
-  cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline && \
-  R CMD INSTALL TopmedPipeline
+  git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git
+
+# execute R script to install topmed packages
+RUN cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline && \
+    Rscript --vanilla --no-save --slave install_packages.R
 
 # create a link analysis_pipeline
 RUN if [ -d /usr/local/analysis_pipeline ]; then \
