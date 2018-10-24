@@ -92,10 +92,10 @@ $(DI_TM_RB).image: $(DF_TM_RB) $(DI_TM_DEVEL).image
         --build-arg itag=$(DT_TM_RB) -f $(DF_TM_RB) . > build_$(DI_TM_RB).log
 	touch $(DI_TM_RB).image
 
-$(DI_TM_RS).image: $(DF_TM_RS) $(DI_TM_RB).image
+$(DI_TM_RS).image: $(DF_TM_RS) $(DI_TM_MASTER).image
 	@echo ">>> "Building $(D_REP)/$(DI_TM_RS):$(DT_TM_RS)
 	$(DB) -t $(D_REP)/$(DI_TM_RS):$(DT_TM_RS) $(DB_OPTS)  \
-        --build-arg rs_version=$(RS_VERSION) --build-arg base_name=$(DI_TM_DEVEL) \
+        --build-arg rs_version=$(RS_VERSION) --build-arg base_name=$(DI_TM_MASTER) \
         --build-arg itag=$(DT_TM_RS) -f $(DF_TM_RS) . > build_$(DI_TM_RS).log
 	touch $(DI_TM_RS).image
 
