@@ -159,7 +159,7 @@ def submitjob(a_submitParams):
 
     # get memory limit option
     if a_submitParams["maxmem"] != None:
-        submitOpts["memory"] = a_submitParams["maxmem"]
+        submitOpts["memory"] = int(a_submitParams["maxmem"])
     else:
         memlim = memoryLimit(job_name, a_submitParams["clustercfg"])
         if memlim != None:
@@ -342,7 +342,7 @@ workdir = args.workdir
 apath = args.apath
 cfgfile = args.cfgfile
 nocores = int(args.nocores)
-maxmem = int(args.maxmem)
+maxmem = args.maxmem
 profile = args.profile
 verbose = args.verbose
 summary = args.summary
