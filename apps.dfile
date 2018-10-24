@@ -5,6 +5,8 @@ FROM uwgac/$base_name:$itag
 
 # need curses5
 Run apt-get update && apt-get install -y libncurses5-dev
+# curl
+RUN apt-get update && apt-get install -y curl
 
 ARG APP_BSRC=/usr/local/src
 ARG APP_BBIN=/usr/local/bin
@@ -74,20 +76,3 @@ RUN pip install boto3 --upgrade
 
 # install python requests
 RUN pip install requests
-
-# install sudo
-RUN apt-get update && apt-get install -y sudo && apt-get install -y curl
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-
-# add some users
-RUN groupadd -g 1002 topmed && \
-    useradd -m -s /bin/bash -r -u 1000 -g topmed ubuntu && \
-    useradd -m -s /bin/bash -r -u 1001 -g topmed kuraisa
-
-RUN adduser ubuntu sudo
-RUN adduser kuraisa sudo
-
-# create an .aws directory in everyone's home
-RUN mkdir ~/.aws && \
-    mkdir /home/ubuntu/.aws && \
-    mkdir /home/kuraisa/.aws
