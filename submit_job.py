@@ -388,11 +388,13 @@ pInfo("Getting cluster configuration ...")
 cfgversion = "3.1"
 stdcfgfile = apath + "/aws_batch_cfg.json"
 clustercfg = getClusterCfg(stdcfgfile, cfgfile, cfgversion)
+if profile == None:
+    profile = clustercfg["aws_profile"]
 
 # create the batch client
 pInfo("Creating the batch client ...")
 try:
-    session = boto3.Session(profile_name = clustercfg["aws_profile"])
+    session = boto3.Session(profile_name = profile)
     batchClient = session.client('batch')
 except Exception as e:
     pError('boto3 session or client exception ' + str(e))
