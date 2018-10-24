@@ -284,11 +284,11 @@ def Summary(hdr):
     print('\tAnalysis:')
     print('\t\tR file: ' + analysis)
     print('\t\tPath to analysis: ' + apath)
-    print('\t\tParameters: ' + workdir)
+    print('\t\tParameters: ' + parameters)
     print('\t\tArray range: ' + str(arrayrange))
     print('\t\tNo. of cores: ' + str(nocores))
     if maxmem != None:
-        print('\t\tMax memory: ' + str(maxmem))
+        print('\t\tMax memory: ' + maxmem)
     else:
         print('\t\tMax memory: specifed in cfg file')
     if profile != None:
@@ -353,7 +353,13 @@ version = args.version
 if version:
     print(__file__ + " version: " + fileversion)
     sys.exit()
-
+# check on analysis and parameters (required params)
+if analysis == None:
+    pError("An analysis (-a argument) must be specified")
+    sys.exit(2)
+if parameters == None:
+    pError("Analysis parameters (-p argument) must be specified")
+    sys.exit(2)
 # check path and analysis R file
 if not os.path.isdir(apath):
     pError("Analysis pipeline directory " + apath + " does not exist")
