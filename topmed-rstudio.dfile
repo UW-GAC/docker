@@ -1,11 +1,11 @@
 ARG itag=latest
 ARG rs_version=1.1.447
-ARG base_name=topmed-roybranch
+ARG base_name=topmed-master
 FROM uwgac/$base_name:$itag
 
 ARG rs_version
 # add an rstudio user
-RUN useradd -m -s /bin/bash -r -u 2001 -g topmed rstudio
+RUN useradd -m -s /bin/bash -r -u 2001 rstudio
 RUN (echo "rstudio:rstudio"|chpasswd)
 
 # add locale
