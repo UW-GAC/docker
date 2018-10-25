@@ -108,6 +108,8 @@ def submitjob(a_submitParams):
     retryStrategy = a_submitParams["clustercfg"]["retryStrategy"]
     pipelinePath = a_submitParams["apath"]
     array_range = a_submitParams["array_range"]
+    driverfile = a_submitParams["driverfile"]
+    job_name = a_submitParams["jobname"]
     # check if array job and > 1 task
     arrayJob = False
     if array_range is not None:
@@ -128,15 +130,14 @@ def submitjob(a_submitParams):
             submitOpts["env"] = [ { "name": envName,
                                     "value": str(taskList[0]) } ]
     # using time set a job id (which is for tracking; not the batch job id)
-    job_name = a_submitParams["analysis"]
     trackID = job_name + "_" + str(int(time.time()*100))
 
     # set the R driver and arguments (e.g., -s rcode cfg --chr cn)
     key = "rd"
-    jobParams[key] = os.path.join(pipelinePath, "runRscript.sh")
+    jobParams[key] = driverfile
 
     key = "ra"
-    jobParams[key] = a_submitParams["analysisfile"] + " " + a_submitParams["params"]
+    jobParams[key] = a_submitParams["params"]
 
     # set the work dir
     key = "wd"
@@ -282,8 +283,9 @@ def Summary(hdr):
     print('\tWorking dir: ' + workdir)
 
     print('\tAnalysis:')
-    print('\t\tR file: ' + analysis)
-    print('\t\tPath to analysis: ' + apath)
+    print('\t\tJob name: ' + jobname)
+    print('\t\tDriver file: ' + driverfile)
+    print('\t\tPath to pipeline: ' + apath)
     print('\t\tParameters: ' + parameters)
     print('\t\tArray range: ' + str(arrayrange))
     print('\t\tNo. of cores: ' + str(nocores))
@@ -302,18 +304,21 @@ def Summary(hdr):
 
 defNocores = 1
 defApath = "/usr/local/analysis_pipeline"
+defDriver = "runRscript.sh"
 
 # command line parser
 parser = ArgumentParser(description = "Helper function to submit a batch to run an analysis from analysis pipeline")
 parser.add_argument("-w", "--workdir",
                      help = "working directory (full path) [default: current working directory]")
 
-parser.add_argument("-a", "--analysis",
-                     help = "analysis to run (e.g., assoc_single)")
+parser.add_argument("-j", "--jobname",
+                     help = 'Job name for tracking [default: None]')
 parser.add_argument("-p", "--parameters",
-                     help = 'analysis parameters(e.g., "assoc.cfg --chromosome 4 --segment 2")')
+                     help = 'driver parameters for analysis (e.g., "-c /usr/local/analysis_pipeline/R/ld_pruning.R cfgfile.cfg --version xxx")')
 parser.add_argument("--apath", default = defApath,
                      help = "analysis pipeline path [default: " + defApath + "]")
+parser.add_argument("--driver", default = defDriver,
+                     help = "Driver for analysis [default: " + defDriver + "]")
 
 parser.add_argument("-c", "--cfgfile",
                      help = "custom batch config file [default: None]")
@@ -336,7 +341,8 @@ parser.add_argument("--version", action="store_true", default = False,
                      help = "Print version of " + __file__)
 
 args = parser.parse_args()
-analysis = args.analysis
+jobname = args.jobname
+driver = args.driver
 parameters = args.parameters
 workdir = args.workdir
 apath = args.apath
@@ -353,21 +359,21 @@ version = args.version
 if version:
     print(__file__ + " version: " + fileversion)
     sys.exit()
+# job name
+if jobname == None:
+    jobname = str(jobname)
 # check on analysis and parameters (required params)
-if analysis == None:
-    pError("An analysis (-a argument) must be specified")
-    sys.exit(2)
 if parameters == None:
-    pError("Analysis parameters (-p argument) must be specified")
+    pError("Driver's parameters for analysis (-p argument) must be specified")
     sys.exit(2)
 # check path and analysis R file
 if not os.path.isdir(apath):
     pError("Analysis pipeline directory " + apath + " does not exist")
     sys.exit(2)
 else:
-    analysisfile = apath + "/R/" + analysis + ".R"
-if not os.path.isfile(analysisfile):
-    pError("Analysis " + analysisfile + " does not exist")
+    driverfile = apath + "/" + driver
+if not os.path.isfile(driverfile):
+    pError("Driver " + driverfile + " does not exist")
     sys.exit(2)
 
 if workdir == None:
@@ -405,8 +411,8 @@ subParams = {
                 'batchclient': batchClient,
                 'clustercfg': clustercfg,
                 'apath': apath,
-                'analysis': analysis,
-                'analysisfile': analysisfile,
+                'jobname': jobname,
+                'driverfile': driverfile,
                 'params': parameters,
                 'array_range': arrayrange,
                 'nocores': nocores,
