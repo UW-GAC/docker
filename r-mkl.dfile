@@ -2,7 +2,7 @@ ARG base_name=apps
 ARG itag=latest
 FROM uwgac/$base_name:$itag
 
-ARG r_version=3.4.3
+ARG r_version=3.5.1
 # download R
 RUN mkdir /usr/local/src/R && \
     cd /usr/local/src/R && \
@@ -21,7 +21,7 @@ RUN echo "Building R with sequential MKL ..." && \
     cd /usr/local/src/R/R-$r_version/build_sequential && \
     /usr/local/src/R/R-$r_version/configure --enable-R-shlib --enable-threads=posix --prefix=/usr/local/R-$r_version --with-blas="$MKL" && \
     make && \
-    # reg-test fails in 3.4.3    make check
+    # reg-test fails in 3.4.3+    make check
     make info && \
     make install
 
@@ -34,7 +34,7 @@ RUN echo "Building R with parallel MKL ..." && \
     cd /usr/local/src/R/R-$r_version/build_parallel && \
     /usr/local/src/R/R-$r_version/configure --enable-R-shlib --enable-threads=posix  --enable-R-shlib --enable-threads=posix --prefix=/usr/local/R-"$r_version"p  --with-blas="$MKL" --with-lapack && \
     make && \
-    # reg-test fails in 3.4.3    make check
+    # reg-test fails in 3.4.3+    make check
     make info && \
     make install
 
