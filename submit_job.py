@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-# submit a single analysis from the analysis pipeline (e.g., ld_loading)
+# submit a single analysis from the analysis pipeline (e.g., ld_pruning)
 import      os
 import      getpass
 import      time
