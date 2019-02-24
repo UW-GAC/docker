@@ -19,12 +19,11 @@ RUN echo "Building R with sequential MKL ..." && \
     MKL="-m64 -L${MKL_LIB_PATH} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm" && \
     mkdir /usr/local/src/R/R-$r_version/build_sequential && \
     cd /usr/local/src/R/R-$r_version/build_sequential && \
-    /usr/local/src/R/R-$r_version/configure --enable-R-shlib --enable-threads=posix --prefix=/usr/local/R-$r_version --with-blas="$MKL" && \
+    /usr/local/src/R/R-$r_version/configure --enable-R-shlib --enable-threads=posix --prefix=/usr/local/R-$r_version --with-blas="$MKL" --with-lapack && \
     make && \
-    # reg-test fails in 3.4.3+    make check
+    make check && \
     make info && \
     make install
-
 # set config vars for building R with parallel mkl; config; make
 RUN echo "Building R with parallel MKL ..." && \
     MKL_LIB_PATH=/opt/intel/mkl/lib/intel64 && \
@@ -34,10 +33,9 @@ RUN echo "Building R with parallel MKL ..." && \
     cd /usr/local/src/R/R-$r_version/build_parallel && \
     /usr/local/src/R/R-$r_version/configure --enable-R-shlib --enable-threads=posix  --enable-R-shlib --enable-threads=posix --prefix=/usr/local/R-"$r_version"p  --with-blas="$MKL" --with-lapack && \
     make && \
-    # reg-test fails in 3.4.3+    make check
+    make check && \
     make info && \
     make install
-
 # create the run-time links to mkl so's
 RUN echo "/opt/intel/mkl/lib/intel64" > /etc/ld.so.conf.d/mkl_intel64.conf
 
