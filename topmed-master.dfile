@@ -1,5 +1,5 @@
 ARG itag=latest
-ARG r_version=3.4.3
+ARG r_version=3.5.1
 ARG base_name=r-${r_version}-mkl
 FROM uwgac/$base_name:$itag
 
