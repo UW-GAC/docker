@@ -45,7 +45,10 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     autoconf \
     libncurses5-dev
-
+  # get gcc 4.8 for building topmed (Matrix bug)
+  RUN apt-get update && apt-get install g++-4.8 -y
+  RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
+  RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
   # get mpich, openmpi, and hdf5
   RUN apt-get update && apt-get install -y \
     mpich \
