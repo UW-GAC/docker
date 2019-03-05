@@ -1,5 +1,5 @@
 ARG itag=latest
-ARG r_version=3.4.3
+ARG r_version=3.5.2
 ARG base_name=topmed-devel
 FROM uwgac/$base_name:$itag
 
@@ -62,35 +62,3 @@ RUN if [ -d /usr/local/analysis_pipeline ]; then \
     fi
 
 RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline /usr/local/analysis_pipeline
-
-# patch add the python scripts to enable outside world access
-ADD ap2batch.py /usr/local/bin
-ADD submit_job.py /usr/local/bin
-
-# install sudo
-RUN apt-get update && apt-get install -y sudo
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-
-# add some users
-RUN groupadd -g 1002 topmed && \
-    useradd -m -s /bin/bash -r -u 1000 -g topmed ubuntu && \
-    useradd -m -s /bin/bash -r -u 1001 -g topmed kuraisa && \
-    useradd -m -s /bin/bash -r -u 1002 -g topmed levined && \
-    useradd -m -s /bin/bash -r -u 1003 -g topmed sdmorris && \
-    useradd -m -s /bin/bash -r -u 1010 -g topmed mchughc && \
-    useradd -m -s /bin/bash -r -u 1011 -g topmed mconomos
-RUN adduser ubuntu sudo
-RUN adduser kuraisa sudo
-RUN adduser levined sudo
-RUN adduser sdmorris sudo
-RUN adduser mchughc sudo
-RUN adduser mconomos sudo
-
-# create an .aws directory in everyone's home
-RUN mkdir ~/.aws && \
-    mkdir /home/ubuntu/.aws && \
-    mkdir /home/kuraisa/.aws && \
-    mkdir /home/levined/.aws && \
-    mkdir /home/sdmorris/.aws && \
-    mkdir /home/mchughc/.aws && \
-    mkdir /home/mconomos/.aws
