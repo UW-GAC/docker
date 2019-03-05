@@ -2,9 +2,13 @@ DC = docker
 DB = $(DC) build
 D_REP = uwgac
 OS_VERSION = 16.04
-R_VERSION = 3.5.1
+#OS_VERSION = 18.04
+R_VERSION = 3.5.2
 MKL_VERSION = 2018.1.163
-RS_VERSION = 1.1.447
+#MKL_VERSION = 2019.2.187
+#RS_VERSION = 1.1.447
+RS_VERSION = 1.1.463
+DTAG = latest
 DB_FLAGS =
 ifeq ($(cfg),cache)
 	CACHE_OPT =
@@ -23,7 +27,7 @@ DI_TM_RS = topmed-rstudio
 
 # docker files
 DF_BASE_OS = ubuntu
-DF_OS = $(DF_BASE_OS)-hpc.dfile
+DF_OS = $(DF_BASE_OS)-$(OS_VERSION)-hpc.dfile
 DF_APPS = apps.dfile
 DF_R = r-mkl.dfile
 DF_TM_MASTER = topmed-master.dfile
@@ -32,13 +36,13 @@ DF_TM_RB = topmed-roybranch.dfile
 DF_TM_RS = topmed-rstudio.dfile
 
 # docker image tags
-DT_OS = latest
-DT_R = latest
-DT_APPS = latest
-DT_TM_MASTER = latest
-DT_TM_DEVEL = latest
-DT_TM_RB = latest
-DT_TM_RS = latest
+DT_OS = $(DTAG)
+DT_R = $(DTAG)
+DT_APPS = $(DTAG)
+DT_TM_MASTER = $(DTAG)
+DT_TM_DEVEL = $(DTAG)
+DT_TM_RB = $(DTAG)
+DT_TM_RS = $(DTAG)
 
 D_IMAGES = $(DI_OS) $(DI_APPS) $(DI_R) $(DI_TM_MASTER) $(DI_TM_DEVEL) $(DI_TM_RB) $(DI_TM_RS)
 D_PUSH = $(addsuffix .push,$(D_IMAGES))
@@ -78,18 +82,18 @@ $(DI_TM_MASTER).image: $(DF_TM_MASTER) $(DI_R).image
         --build-arg itag=$(DT_R) -f $(DF_TM_MASTER) . > build_$(DI_TM_MASTER).log
 	touch $(DI_TM_MASTER).image
 
-$(DI_TM_DEVEL).image: $(DF_TM_DEVEL) $(DI_TM_MASTER).image
+$(DI_TM_DEVEL).image: $(DF_TM_DEVEL) $(DI_R).image
 	@echo ">>> "Building $(D_REP)/$(DI_TM_DEVEL):$(DT_TM_DEVEL)
 	$(DB) -t $(D_REP)/$(DI_TM_DEVEL):$(DT_TM_DEVEL) $(DB_OPTS)  \
-        --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_TM_MASTER) \
-        --build-arg itag=$(DT_TM_MASTER) -f $(DF_TM_DEVEL) . > build_$(DI_TM_DEVEL).log
+        --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_R) \
+        --build-arg itag=$(DT_R) -f $(DF_TM_DEVEL) . > build_$(DI_TM_DEVEL).log
 	touch $(DI_TM_DEVEL).image
 
-$(DI_TM_RB).image: $(DF_TM_RB) $(DI_TM_DEVEL).image
+$(DI_TM_RB).image: $(DF_TM_RB) $(DI_R).image
 	@echo ">>> "Building $(D_REP)/$(DI_TM_RB):$(DT_TM_RB)
 	$(DB) -t $(D_REP)/$(DI_TM_RB):$(DT_TM_RB) $(DB_OPTS)  \
         --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_TM_DEVEL) \
-        --build-arg itag=$(DT_TM_RB) -f $(DF_TM_RB) . > build_$(DI_TM_RB).log
+        --build-arg itag=$(DT_TM_DEVEL) -f $(DF_TM_RB) . > build_$(DI_TM_RB).log
 	touch $(DI_TM_RB).image
 
 $(DI_TM_RS).image: $(DF_TM_RS) $(DI_TM_MASTER).image
