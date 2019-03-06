@@ -49,8 +49,12 @@ def jobdel(batchC, jobid, wait, verbose):
         while True:
             jobinfo = jobstat(batchC, jobid, verbose)
             if len(jobinfo) == 0:
-                print("job terminated: " + jobid)
+                print("job no longer exists: " + jobid)
                 break
+            else:
+                if jobinfo["status"] == "FAILED":
+                    print("job terminated and in FAILED state: " + jobid)
+                    break
             time.sleep(sTime)
             timeW += sTime
             if timeW > maxTime:
