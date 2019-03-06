@@ -1,0 +1,70 @@
+ARG base_os=ubuntu
+ARG itag=18.04
+FROM $base_os:$itag
+
+ARG mkl_version=2018.1.163
+# get development packages
+
+ENV TZ=America/Los_Angeles
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN apt-get update && apt-get install -y \
+  build-essential \
+  python-dev \
+  git \
+  nodejs \
+  npm \
+  gnome-tweak-tool \
+  openjdk-8-jdk \
+  python-pip \
+  python-numpy \
+  python-matplotlib \
+  wget \
+  cpio \
+  iputils-ping \
+  texinfo \
+  gfortran \
+  libreadline-dev \
+  bzip2 \
+  libbz2-dev \
+  vim \
+  lzma \
+  liblzma-dev \
+  libpcre3-dev \
+  libcurl4-gnutls-dev \
+  default-jre \
+  default-jdk \
+  nfs-common \
+  libpng-dev \
+  libcairo2-dev \
+  libnetcdf-dev \
+  libxml2-dev \
+  libpango1.0-dev \
+  pandoc \
+  freeglut3-dev \
+  libdatetime-perl
+  # get gcc 4.8 for building topmed (Matrix bug)
+  RUN apt-get update && apt-get install g++-4.8 -y
+  RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
+  RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
+  # get mpich, openmpi, and hdf5
+  RUN apt-get update && apt-get install -y \
+    mpich \
+    libmpich-dev \
+    libmpich12 \
+    h5utils \
+    hdf5-tools \
+    libhdf5-doc \
+    libopenmpi-dev \
+    libopenmpi2 \
+    openmpi-doc
+
+# try mkl
+RUN mkdir /usr/local/src/mkl
+
+# mkl add the host tar file
+ADD l_mkl_$mkl_version.tgz /usr/local/src/mkl/
+# install mkl silently
+RUN echo "\n\n*** building mkl ... ***\n\n" && \
+  cd /usr/local/src/mkl/l_mkl_$mkl_version && \
+  sed 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' silent.cfg > silent_build.cfg && \
+  ./install.sh --silent ./silent_build.cfg
