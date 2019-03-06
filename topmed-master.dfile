@@ -74,7 +74,7 @@ ADD ap2batch.py /usr/local/bin
 ADD submit_job.py /usr/local/bin
 
 # add job mgmt to described and terminate batch jobs
-ADD jobmgmt.py
+ADD jobmgmt.py /usr/local/bin
 
 # install sudo
 RUN apt-get update && apt-get install -y sudo
