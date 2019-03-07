@@ -2,6 +2,7 @@
 import os
 import sys
 import time
+from   datetime import datetime
 
 from       argparse import ArgumentParser
 
@@ -19,17 +20,36 @@ def jobstat(batchC, jobid, verbose):
         print('describe_jobs exception ' + str(e))
         sys.exit(2)
     # if found, get info
-    if len(jinfo["jobs"]) > 0 :
+    if len(jinfo["jobs"]) > 0:
         theJob = jinfo["jobs"][0]
+        if verbose:
+            print("job info: \n")
+            print(str(theJob))
+        startTime = "N/A"
+        stopTime = "N/A"
+        tfmt = "%A, %B %d, %Y %I:%M:%S"
+        key = "startedAt"
+        if key in theJob.keys():
+            tTime = theJob[key]
+            startTime = datetime.fromtimestamp(tTime/1000).strftime(tfmt)
+        key = "stoppedAt"
+        if key in theJob.keys():
+            tTime = theJob[key]
+            stopTime = datetime.fromtimestamp(tTime/1000).strftime(tfmt)
         jobinfo["jobName"] = theJob["jobName"]
         jobinfo["jobQueue"] = theJob["jobQueue"]
         jobinfo["status"] = theJob["status"]
         jobinfo["jobId"] = theJob["jobId"]
+        jobinfo["startedAt"] = startTime
+        jobinfo["stoppedAt"] = stopTime
+        jobinfo["memory"] = str(theJob["container"]["memory"])
+        jobinfo["vcpus"] = str(theJob["container"]["vcpus"])
 
     return jobinfo
 
-def jobdel(batchC, jobid, wait, verbose):
+def jobdel(batchC, jobid, wait, printout, verbose):
     # get the job stat
+
     jobinfo = jobstat(batchC, jobid, verbose)
     if len(jobinfo) == 0:
         print('jobid does not exist: '  + jobid)
@@ -97,10 +117,8 @@ if describe:
         print("job not found : " + jobid)
         sys.exit(2)
     print("jobinfo: ")
-    print("\tstatus: " + jobinfo["status"])
-    print("\tjob name: " + jobinfo["jobName"])
-    print("\tqueue: " + jobinfo["jobQueue"])
-    print("\tjob id: " + jobinfo["jobId"])
+    for key in jobinfo:
+        print("\t" + key +": " + jobinfo[key])
 
 if terminate:
-    jobdel(batchC, jobid, wait, verbose = debug)
+    jobdel(batchC, jobid, wait, describe, verbose = debug)
