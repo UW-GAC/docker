@@ -44,6 +44,7 @@ def jobstat(batchC, jobid, verbose):
         jobinfo["stoppedAt"] = stopTime
         jobinfo["memory"] = str(theJob["container"]["memory"])
         jobinfo["vcpus"] = str(theJob["container"]["vcpus"])
+        jobinfo["image"] = theJob["container"]["image"]
 
     return jobinfo
 
