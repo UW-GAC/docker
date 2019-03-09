@@ -11,8 +11,57 @@ try:
 except ImportError:
     print ("AWS batch not supported.")
 
-def jobstat(batchC, jobid, verbose):
+def taskstat(batchC, jobid, noTasks, verbose):
+    taskinfo = []
+    # get info on all tasks (<jobid>:<index>)
+    for task in range(noTasks):
+        tinfo = {}
+        tid = jobid + ":" + str(task)
+        if verbose:
+            print("array job id: " + tid)
+        try:
+            jinfo = batchC.describe_jobs(jobs = [ tid ])
+        except Exception as e:
+            print('describe_jobs exception for array job ' + str(e))
+            sys.exit(2)
+        if len(jinfo["jobs"]) > 0:
+            theJob = jinfo["jobs"][0]
+            if verbose:
+                print("job info: \n")
+                print(str(theJob))
+            index = str(theJob["arrayProperties"]["index"])
+            startTime = "N/A"
+            stopTime = "N/A"
+            tfmt = "%A, %B %d, %Y %I:%M:%S %p"
+            key = "startedAt"
+            if key in theJob.keys():
+                tTime = theJob[key]
+                startTime = datetime.fromtimestamp(tTime/1000).strftime(tfmt)
+            key = "stoppedAt"
+            if key in theJob.keys():
+                tTime = theJob[key]
+                stopTime = datetime.fromtimestamp(tTime/1000).strftime(tfmt)
+            tinfo["a. task_id"] = tid
+            tinfo["b. \tstart time"] = startTime
+            tinfo["c. \tend time"] = stopTime
+            tinfo["d. \tindex"] = index
+            statusreason = "N/A"
+            key = "statusReason"
+            if key in theJob["container"].keys():
+                statusreason = theJob["container"][key]
+            tinfo["e. \tstatus"] = statusreason
+            statusinfo = "N/A"
+            key = "reason"
+            if key in theJob["container"].keys():
+                statusinfo = theJob["container"][key]
+            tinfo["f. \tstatus info"] = statusinfo
+            taskinfo.append(tinfo)
+    return taskinfo
+
+def jobstat(batchC, jobid, arrayProperties, verbose):
     jobinfo = {}
+    arrayinfo = []
+    results = [jobinfo, arrayinfo]
     # get the job status
     try:
         jinfo = batchC.describe_jobs(jobs = [ jobid ])
@@ -27,7 +76,7 @@ def jobstat(batchC, jobid, verbose):
             print(str(theJob))
         startTime = "N/A"
         stopTime = "N/A"
-        tfmt = "%A, %B %d, %Y %I:%M:%S"
+        tfmt = "%A, %B %d, %Y %I:%M:%S %p"
         key = "startedAt"
         if key in theJob.keys():
             tTime = theJob[key]
@@ -36,17 +85,39 @@ def jobstat(batchC, jobid, verbose):
         if key in theJob.keys():
             tTime = theJob[key]
             stopTime = datetime.fromtimestamp(tTime/1000).strftime(tfmt)
-        jobinfo["jobName"] = theJob["jobName"]
-        jobinfo["jobQueue"] = theJob["jobQueue"]
-        jobinfo["status"] = theJob["status"]
-        jobinfo["jobId"] = theJob["jobId"]
-        jobinfo["startedAt"] = startTime
-        jobinfo["stoppedAt"] = stopTime
-        jobinfo["memory"] = str(theJob["container"]["memory"])
-        jobinfo["vcpus"] = str(theJob["container"]["vcpus"])
-        jobinfo["image"] = theJob["container"]["image"]
+        jobinfo["a. jobName"] = theJob["jobName"]
+        jobinfo["j. jobQueue"] = theJob["jobQueue"]
+        jobinfo["b. status"] = theJob["status"]
+        statusinfo = "N/A"
+        key = "reason"
+        if key in theJob["container"].keys():
+            statusinfo = theJob["container"]["reason"]
+        else:
+            key = "statusReason"
+            if key in theJob.keys():
+                statusinfo = theJob[key]
+        jobinfo["c. status info"] = statusinfo
+        jobinfo["d. jobId"] = theJob["jobId"]
+        jobinfo["e. startedAt"] = startTime
+        jobinfo["f. stoppedAt"] = stopTime
+        jobinfo["g. memory"] = str(theJob["container"]["memory"])
+        jobinfo["h. vcpus"] = str(theJob["container"]["vcpus"])
+        jobinfo["i. image"] = theJob["container"]["image"]
+        # check if array
+        key = "arrayProperties"
+        ikey = "k. arrayjob"
+        if key in theJob.keys():
+            jobinfo[ikey] = "yes"
+        else:
+            jobinfo[ikey] = "no"
+        if arrayProperties and jobinfo[ikey] == "yes":
+            jid = theJob["jobId"]
+            noTasks = theJob[key]["size"]
+            arrayinfo = taskstat(batchC, jid, noTasks, verbose)
 
-    return jobinfo
+    results = [jobinfo, arrayinfo]
+
+    return results
 
 def jobdel(batchC, jobid, wait, printout, verbose):
     # get the job stat
@@ -90,6 +161,8 @@ parser.add_argument( "-p", "--profile", default = "uw",
                      help = "aws profile")
 parser.add_argument( "-d", "--describe", action="store_false", default = True,
                      help = "describe job state [default: True]" )
+parser.add_argument( "-a", "--arrayproperties", action="store_true", default = False,
+                     help = "describe array properties [default: False]" )
 parser.add_argument( "-t", "--terminate", action="store_true", default = False,
                      help = "describe job state [default: False]" )
 parser.add_argument( "-w", "--wait", action="store_true", default = False,
@@ -103,6 +176,7 @@ describe = args.describe
 terminate = args.terminate
 wait = args.wait
 debug = args.Debug
+arrayproperties = args.arrayproperties
 
 try:
     session = boto3.Session(profile_name = profile)
@@ -113,13 +187,20 @@ except Exception as e:
     sys.exit(2)
 
 if describe:
-    jobinfo = jobstat(batchC, jobid, verbose = debug)
+    results = jobstat(batchC, jobid, arrayproperties, verbose = debug)
+    jobinfo = results[0]
     if len(jobinfo) == 0:
         print("job not found : " + jobid)
         sys.exit(2)
     print("jobinfo: ")
-    for key in jobinfo:
-        print("\t" + key +": " + jobinfo[key])
+    for key in sorted(jobinfo.keys()):
+        print("\t" + key + ": " + jobinfo[key])
+    arrayinfo = results[1]
+    if len(arrayinfo) > 0:
+        print("arrayinfo:")
+        for task in arrayinfo:
+            for key in sorted(task.keys()):
+                print("\t" + key + ": " + task[key])
 
 if terminate:
     jobdel(batchC, jobid, wait, describe, verbose = debug)
