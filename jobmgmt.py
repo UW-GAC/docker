@@ -9,7 +9,8 @@ from       argparse import ArgumentParser
 try:
     import boto3
 except ImportError:
-    print ("AWS batch not supported.")
+    print ("AWS boto3 not installed.")
+    sys.exit(2)
 
 def taskstat(batchC, jobid, noTasks, verbose):
     taskinfo = []
@@ -122,13 +123,15 @@ def jobstat(batchC, jobid, arrayProperties, verbose):
 def jobdel(batchC, jobid, wait, printout, verbose):
     # get the job stat
 
-    jobinfo = jobstat(batchC, jobid, verbose)
-    if len(jobinfo) == 0:
+    results = jobstat(batchC, jobid, False, verbose)
+    if len(results) == 0:
         print('jobid does not exist: '  + jobid)
         sys.exit(2)
     # terminate
+    if verbose:
+        print('Terminated job id: ' + jobid)
     try:
-        batchC.terminate_job( jobId = jobinfo["jobId"], reason = "Request to terminate")
+        batchC.terminate_job( jobId = jobid, reason = "Request to terminate")
     except Exception as e:
         print('terminate_job exception ' + str(e))
         sys.exit(2)
@@ -139,12 +142,13 @@ def jobdel(batchC, jobid, wait, printout, verbose):
         timeW = 0
         sTime = 2
         while True:
-            jobinfo = jobstat(batchC, jobid, verbose)
-            if len(jobinfo) == 0:
+            results = jobstat(batchC, jobid, verbose)
+            if len(results) == 0:
                 print("job no longer exists: " + jobid)
                 break
             else:
-                if jobinfo["status"] == "FAILED":
+                jobinfo = results[0]
+                if jobinfo["c. status info"] == "FAILED":
                     print("job terminated and in FAILED state: " + jobid)
                     break
             time.sleep(sTime)
