@@ -51,7 +51,7 @@ def arraystat(batchC, job, verbose):
 
     return tstats
 
-def jobstat(batchC, jobids, verbose):
+def proc_jobids(batchC, jobids, verbose):
     jobstats= []
     arrayinfo = []
     results = [jobinfo, arrayinfo]
@@ -89,50 +89,195 @@ def jobstat(batchC, jobids, verbose):
             jobstats.append(jd)
 
     results = jobstats
+    return results
+
+def taskstat(batchC, jobid, noTasks, verbose):
+    taskinfo = []
+    # get info on all tasks (<jobid>:<index>)
+    for task in range(noTasks):
+        tinfo = {}
+        tid = jobid + ":" + str(task)
+        if verbose:
+            print("array job id: " + tid)
+        try:
+            jinfo = batchC.describe_jobs(jobs = [ tid ])
+        except Exception as e:
+            print('describe_jobs exception for array job ' + str(e))
+            sys.exit(2)
+        if len(jinfo["jobs"]) > 0:
+            theJob = jinfo["jobs"][0]
+            if verbose:
+                print("job info: \n")
+                print(str(theJob))
+            index = str(theJob["arrayProperties"]["index"])
+            startTime = "N/A"
+            stopTime = "N/A"
+            tfmt = "%A, %B %d, %Y %I:%M:%S %p"
+            key = "startedAt"
+            if key in theJob.keys():
+                tTime = theJob[key]
+                startTime = datetime.fromtimestamp(tTime/1000).strftime(tfmt)
+            key = "stoppedAt"
+            if key in theJob.keys():
+                tTime = theJob[key]
+                stopTime = datetime.fromtimestamp(tTime/1000).strftime(tfmt)
+            tinfo["a. task_id"] = tid
+            tinfo["b. \tstart time"] = startTime
+            tinfo["c. \tend time"] = stopTime
+            tinfo["d. \tindex"] = index
+            statusreason = "N/A"
+            key = "statusReason"
+            if key in theJob["container"].keys():
+                statusreason = theJob["container"][key]
+            tinfo["e. \tstatus"] = statusreason
+            statusinfo = "N/A"
+            key = "reason"
+            if key in theJob["container"].keys():
+                statusinfo = theJob["container"][key]
+            tinfo["f. \tstatus info"] = statusinfo
+            taskinfo.append(tinfo)
+    return taskinfo
+
+def jobstat(batchC, jobid, arrayProperties, verbose):
+    jobinfo = {}
+    arrayinfo = []
+    results = [jobinfo, arrayinfo]
+    # get the job status
+    try:
+        jinfo = batchC.describe_jobs(jobs = [ jobid ])
+    except Exception as e:
+        print('describe_jobs exception ' + str(e))
+        sys.exit(2)
+    # if found, get info
+    if len(jinfo["jobs"]) > 0:
+        theJob = jinfo["jobs"][0]
+        if verbose:
+            print("job info: \n")
+            print(str(theJob))
+        startTime = "N/A"
+        stopTime = "N/A"
+        tfmt = "%A, %B %d, %Y %I:%M:%S %p"
+        key = "startedAt"
+        if key in theJob.keys():
+            tTime = theJob[key]
+            startTime = datetime.fromtimestamp(tTime/1000).strftime(tfmt)
+        key = "stoppedAt"
+        if key in theJob.keys():
+            tTime = theJob[key]
+            stopTime = datetime.fromtimestamp(tTime/1000).strftime(tfmt)
+        jobinfo["a. jobName"] = theJob["jobName"]
+        jobinfo["j. jobQueue"] = theJob["jobQueue"]
+        jobinfo["b. status"] = theJob["status"]
+        statusinfo = "N/A"
+        key = "reason"
+        if key in theJob["container"].keys():
+            statusinfo = theJob["container"]["reason"]
+        else:
+            key = "statusReason"
+            if key in theJob.keys():
+                statusinfo = theJob[key]
+        jobinfo["c. status info"] = statusinfo
+        jobinfo["d. jobId"] = theJob["jobId"]
+        jobinfo["e. startedAt"] = startTime
+        jobinfo["f. stoppedAt"] = stopTime
+        jobinfo["g. memory"] = str(theJob["container"]["memory"])
+        jobinfo["h. vcpus"] = str(theJob["container"]["vcpus"])
+        jobinfo["i. image"] = theJob["container"]["image"]
+        # check if array
+        key = "arrayProperties"
+        ikey = "k. arrayjob"
+        if key in theJob.keys():
+            jobinfo[ikey] = "yes"
+        else:
+            jobinfo[ikey] = "no"
+        if arrayProperties and jobinfo[ikey] == "yes":
+            jid = theJob["jobId"]
+            noTasks = theJob[key]["size"]
+            arrayinfo = taskstat(batchC, jid, noTasks, verbose)
+
+    results = [jobinfo, arrayinfo]
 
     return results
 
+def jobdel(batchC, jobid, printout, verbose):
+    # describe the job
+    try:
+        results = batchC.describe_jobs(jobs = [ jobid ])
+    except Exception as e:
+        print('describe_jobs exception ' + str(e))
+        sys.exit(2)
+    jobs = results['jobs']
+    if len(jobs) == 0:
+        print('jobid does not exist: '  + jobid)
+        return
+    job = jobs[0]
+    if verbose:
+        print('job describe: ' + str(job))
+    # see if job is FAILED or SUCCEEDED
+    if job["status"] == "FAILED":
+        print('Job ' + jobid + " has FAILED and already terminated")
+        return
+    if job["status"] == "SUCCEEDED":
+        print('Job ' + jobid + " has SUCCEEDED and already terminated")
+        return
+    # terminate
+    if verbose:
+        print('Terminating job id: ' + jobid)
+    try:
+        batchC.terminate_job( jobId = jobid, reason = "Request to terminate")
+    except Exception as e:
+        print('terminate_job exception ' + str(e))
+        sys.exit(2)
+    print("Requested job to terminate: " + jobid)
+
 # parse input
-parser = ArgumentParser( description = "script to test batchinit" )
-parser.add_argument( "-j", "--jobinfo",
-                     help = "jobinfo file [required]" )
-parser.add_argument( "-p", "--profile", default = "uw",
-                     help = "aws profile")
-parser.add_argument( "-a", "--arraystatus", action="store_true", default = False,
-                     help = "describe array status [default: False]" )
+parser = ArgumentParser( description = "Process an aws jobinfo file or describe job id" )
+parser.add_argument( "jobinfo", nargs = 1, help = "jobinfo file or job id" )
+parser.add_argument("-j", "--jiflag", action="store_true", default = False,
+                    help = "jobinfo is an id (not a file) [default: False]")
+parser.add_argument( "-p", "--profile", default = "uw", help = "aws profile")
+parser.add_argument( "-a", "--arraydetails", action="store_true", default = False,
+                     help = "describe array details (if applicable) for specified job id [default: False]" )
+parser.add_argument( "-t", "--terminate", action="store_true", default = False,
+                     help = "terminate the specified job id [default: False]" )
 parser.add_argument( "-D", "--Debug", action="store_true", default = False,
                      help = "Turn on verbose output [default: False]" )
 args = parser.parse_args()
 jobinfo = args.jobinfo
+jobinfo = jobinfo[0]
 profile = args.profile
-arraystatus = args.arraystatus
+arraydetails = args.arraydetails
+terminate = args.terminate
 debug = args.Debug
-
-# check if ji file exists
-if not os.path.isfile(jobinfo):
+jiflag = args.jiflag
+# if jobinfo does not exist as a file, then assume it's a job id
+if not jiflag and not os.path.isfile(jobinfo):
     print('Error: jobinfo file ' + jobinfo + ' does not exist.')
     sys.exit(2)
 
-# read the job info file and create a list of dicts
-jobslist = []
-with open(jobinfo, "r") as jfile:
-    for line in jfile:
-        ll = line.split()
-        # get the keys (field with ':')
-        kp = [s for s in ll if any(':' in i for i in s)]
-        keys = [s.strip(':') for s in kp]
-        # get the vals
-        vals = [s for s in ll if not any(':' in i for i in s)]
-        # create a dict and append to the jobslist
-        jdict = dict(zip(keys, vals))
-        if len(jdict) == 0:
-            continue
-        if debug:
-            print('Debug: job ' + str(jdict) )
-        jobslist.append(jdict)
-if len(jobslist) == 0:
-    print('Error: jobinfo file format is not valid')
-    sys.exit(2)
+if not jiflag:
+    # read the job info file and create a list of dicts
+    jobslist = []
+    with open(jobinfo, "r") as jfile:
+        for line in jfile:
+            ll = line.split()
+            # get the keys (field with ':')
+            kp = [s for s in ll if any(':' in i for i in s)]
+            keys = [s.strip(':') for s in kp]
+            # get the vals
+            vals = [s for s in ll if not any(':' in i for i in s)]
+            # create a dict and append to the jobslist
+            jdict = dict(zip(keys, vals))
+            if len(jdict) == 0:
+                continue
+            if debug:
+                print('Debug: job ' + str(jdict) )
+            jobslist.append(jdict)
+    if len(jobslist) == 0:
+        print('Error: jobinfo file format is not valid')
+        sys.exit(2)
+else:
+    jobid = jobinfo
 
 try:
     session = boto3.Session(profile_name = profile)
@@ -143,17 +288,43 @@ except Exception as e:
     sys.exit(2)
 # get the list of job ids
 if debug:
-    print('jobslist: ' + str(jobslist))
-jids = [jd['jobId'] for jd in jobslist]
+    if not jiflag:
+        print('jobslist: ' + str(jobslist))
+    else:
+        print('job id: ' + jobid)
 
-# get status
-jstats = jobstat(batchC, jobids = jids, verbose = debug)
+if not jiflag:
+    # process jobinfo file
+    jids = [jd['jobId'] for jd in jobslist]
 
-# print out stats
-if len(jstats) == 0:
-    print("No jobs found  : " + str(jids))
-    sys.exit(0)
-print('Jobs status:')
-jstats.sort()
-for jd in jstats:
-    print(jd)
+    # process the job ids
+    jstats = proc_jobids(batchC, jobids = jids, verbose = debug)
+
+    # print out stats
+    if len(jstats) == 0:
+        print("No jobs found  : " + str(jids))
+        sys.exit(0)
+    print('Jobs status:')
+    jstats.sort()
+    for jd in jstats:
+        print(jd)
+else:
+    # process the jobid
+    if not terminate:
+        # describe the job
+        results = jobstat(batchC, jobid, arraydetails, verbose = debug)
+        jobinfo = results[0]
+        if len(jobinfo) == 0:
+            print("job not found : " + jobid)
+            sys.exit(2)
+        print("jobinfo: ")
+        for key in sorted(jobinfo.keys()):
+            print("\t" + key + ": " + jobinfo[key])
+        arrayinfo = results[1]
+        if len(arrayinfo) > 0:
+            print("arrayinfo:")
+            for task in arrayinfo:
+                for key in sorted(task.keys()):
+                    print("\t" + key + ": " + task[key])
+    else:
+        jobdel(batchC, jobid, printout = True, verbose = debug)
