@@ -73,8 +73,8 @@ RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline /
 ADD ap2batch.py /usr/local/bin
 ADD submit_job.py /usr/local/bin
 
-# add job mgmt to described and terminate batch jobs
-ADD jobmgmt.py /usr/local/bin
+# add jstats to manage batch jobs
+ADD jstats.py /usr/local/bin
 
 # install sudo
 RUN apt-get update && apt-get install -y sudo
@@ -112,3 +112,17 @@ RUN mkdir ~/.aws && \
     mkdir /home/amarise/.aws && \
     mkdir /home/avmikh/.aws && \
     mkdir /home/calaurie/.aws
+
+# set umask to 002 so that files created via batch or docker can easily be managed
+# by users on the local computer (topmed-docker)
+
+    RUN echo "umask    002" >> /root/.bashrc
+    RUN echo "umask    002" >> /home/ubuntu/.bashrc
+    RUN echo "umask    002" >> /home/levined/.bashrc
+    RUN echo "umask    002" >> /home/sdmorris/.bashrc
+    RUN echo "umask    002" >> /home/mchughc/.bashrc
+    RUN echo "umask    002" >> /home/mconomos/.bashrc
+    RUN echo "umask    002" >> /home/amarise/.bashrc
+    RUN echo "umask    002" >> /home/avmikh/.bashrc
+    RUN echo "umask    002" >> /home/calaurie/.bashrc
+    RUN echo "umask    002" >> /home/kuraisa/.bashrc
