@@ -79,11 +79,11 @@ make R_VERSION=3.5.3
 The python files are:
 - ap2batch.py
 - submit_job.py
-- jobmgmt.py
+- jstats.py
 
-#### jobmgmt.py ####
-When an analysis (via the analysis pipeline) is run on AWS batch, a job information file (e.g., `association_jobinfo.txt`) is produced that contains the job ids of the submitted jobs.  The `jobmgmt.py` python file describe various attributes (e.g., `status`) of a job specified by its job id.  Additionally, the python file also provides an option to terminate the job.
- 
+#### jstats.py ####
+When an analysis (via the analysis pipeline) is run on AWS batch, a job information file (e.g., `association_jobinfo.txt`) is produced that contains the job ids of the submitted jobs.  The `jstats.py` python script can either describe a specified job id or describe all the jobs in a specified jobinfo file.
+
 #### ap2batch.py ####
 The `ap2batch.py` python file added to the docker images `topmed-master` and `topmed-devel` and stored in `/usr/local/bin`. `ap2batch.py` and it's command line options are specified in the AWS batch job definition. Using the job definition, the script is run when an analysis pipeline job is submitted to AWS batch.
 
