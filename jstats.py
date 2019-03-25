@@ -28,12 +28,12 @@ def arraystat(batchC, job, verbose):
     jid = job["jobId"]
     noTasks = job[key]["size"]
     if verbose:
-        print('jid: ' + jid)
-        print('no. tasks: ' + str(noTasks))
+        print('Debug arraystat - jid: ' + jid)
+        print('Debug arraystat - no. tasks: ' + str(noTasks))
     # build a list of task ids
     tids = createtaskids(jid, noTasks)
     if verbose:
-        print("task ids: " + str(tids))
+        print("Debug arraystat - task ids: " + str(tids))
     try:
         dj = batchC.describe_jobs(jobs = tids)
     except Exception as e:
@@ -63,6 +63,8 @@ def proc_jobids(batchC, jobids, terminate=False, verbose=False):
         sys.exit(2)
     # if found, get info
     noJobs = len(jinfo["jobs"])
+    if verbose:
+        print("Debug proc_jobids - no. of jobs found: " + str(noJobs))
     if noJobs > 0:
         jobs = jinfo["jobs"]
         for job in jobs:
@@ -72,8 +74,8 @@ def proc_jobids(batchC, jobids, terminate=False, verbose=False):
                 continue;
             jd = {}
             if verbose:
-                print("job info: \n")
-                print(str(job))
+                print("proc_jobids - job info: \n")
+                print("\t" + str(job))
             jobtype = "single"
             jobstatus = job['status']
             if "arrayProperties" in job.keys():
@@ -102,7 +104,7 @@ def taskstat(batchC, jobid, noTasks, verbose):
         tinfo = {}
         tid = jobid + ":" + str(task)
         if verbose:
-            print("array job id: " + tid)
+            print("Debug taskstat - array job id: " + tid)
         try:
             jinfo = batchC.describe_jobs(jobs = [ tid ])
         except Exception as e:
@@ -156,8 +158,8 @@ def jobstat(batchC, jobid, arrayProperties, verbose):
     if len(jinfo["jobs"]) > 0:
         theJob = jinfo["jobs"][0]
         if verbose:
-            print("job info: \n")
-            print(str(theJob))
+            print("jobstat - job info: \n")
+            print("\t" + str(theJob))
         startTime = "N/A"
         stopTime = "N/A"
         tfmt = "%A, %B %d, %Y %I:%M:%S %p"
@@ -216,7 +218,7 @@ def jobdel(batchC, jobid, printout=False, verbose=False):
         return
     job = jobs[0]
     if verbose:
-        print('job describe: ' + str(job))
+        print('Debug jobdel - job describe: ' + str(job))
     # see if job is FAILED or SUCCEEDED
     if job["status"] == "FAILED":
         print('Job ' + jobid + " has FAILED and already terminated")
@@ -226,7 +228,7 @@ def jobdel(batchC, jobid, printout=False, verbose=False):
         return
     # terminate
     if verbose:
-        print('Terminating job id: ' + jobid)
+        print('Debug jobdel - Terminating job id: ' + jobid)
     try:
         batchC.terminate_job( jobId = jobid, reason = "Request to terminate")
     except Exception as e:
@@ -237,8 +239,6 @@ def jobdel(batchC, jobid, printout=False, verbose=False):
 # parse input
 parser = ArgumentParser( description = "Get the statuses of jobs or terminate jobs from the job info file" )
 parser.add_argument( "jobinfo", nargs = 1, help = "jobinfo file or job id" )
-parser.add_argument("-j", "--jiflag", action="store_true", default = False,
-                    help = "jobinfo is an id (not a file) [default: False]")
 parser.add_argument( "-p", "--profile", default = "uw", help = "aws profile")
 parser.add_argument( "-a", "--arraydetails", action="store_true", default = False,
                      help = "describe array details (if applicable) for specified job id [default: False]" )
@@ -253,14 +253,15 @@ profile = args.profile
 arraydetails = args.arraydetails
 terminate = args.terminate
 debug = args.Debug
-jiflag = args.jiflag
-# if jobinfo does not exist as a file, then assume it's a job id
-if not jiflag and not os.path.isfile(jobinfo):
-    print('Error: jobinfo file ' + jobinfo + ' does not exist.')
-    sys.exit(2)
+# see if argument is a file; if not assume it's a job id
+if os.path.isfile(jobinfo):
+    idflag = False;
+else:
+    idflag = True;
 
-if not jiflag:
+if not idflag:
     # read the job info file and create a list of dicts
+    print("Reading jobinfo file " + jobinfo)
     jobslist = []
     with open(jobinfo, "r") as jfile:
         for line in jfile:
@@ -274,8 +275,6 @@ if not jiflag:
             jdict = dict(zip(keys, vals))
             if len(jdict) == 0:
                 continue
-            if debug:
-                print('Debug: job ' + str(jdict) )
             jobslist.append(jdict)
     if len(jobslist) == 0:
         print('Error: jobinfo file format is not valid')
@@ -292,12 +291,12 @@ except Exception as e:
     sys.exit(2)
 # get the list of job ids
 if debug:
-    if not jiflag:
-        print('jobslist: ' + str(jobslist))
+    if not idflag:
+        print('Debug - no of jobs in jobslist: ' + str(len(jobslist)))
     else:
-        print('job id: ' + jobid)
+        print('Debug - job id: ' + jobid)
 
-if not jiflag:
+if not idflag:
     # process jobinfo file
     jids = [jd['jobId'] for jd in jobslist]
 
@@ -307,7 +306,8 @@ if not jiflag:
     if not terminate:
         # print out stats
         if len(jstats) == 0:
-            print("No jobs found  : " + str(jids))
+            print("No jobs found  in : " + jobinfo)
+            print("\tJob IDs: " + str(jids))
             sys.exit(0)
         print('Jobs status:')
         jstats.sort()
