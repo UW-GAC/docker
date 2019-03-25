@@ -235,7 +235,7 @@ def jobdel(batchC, jobid, printout=False, verbose=False):
     print("Requested job to terminate: " + jobid)
 
 # parse input
-parser = ArgumentParser( description = "Process an aws jobinfo file or describe job id" )
+parser = ArgumentParser( description = "Get the statuses of jobs or terminate jobs from the job info file" )
 parser.add_argument( "jobinfo", nargs = 1, help = "jobinfo file or job id" )
 parser.add_argument("-j", "--jiflag", action="store_true", default = False,
                     help = "jobinfo is an id (not a file) [default: False]")
@@ -243,7 +243,7 @@ parser.add_argument( "-p", "--profile", default = "uw", help = "aws profile")
 parser.add_argument( "-a", "--arraydetails", action="store_true", default = False,
                      help = "describe array details (if applicable) for specified job id [default: False]" )
 parser.add_argument( "-t", "--terminate", action="store_true", default = False,
-                     help = "terminate the specified job id [default: False]" )
+                     help = "terminate either all the jobs in the job info file or the specified job id [default: False]" )
 parser.add_argument( "-D", "--Debug", action="store_true", default = False,
                      help = "Turn on verbose output [default: False]" )
 args = parser.parse_args()
