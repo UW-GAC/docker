@@ -51,7 +51,7 @@ def arraystat(batchC, job, verbose):
 
     return tstats
 
-def proc_jobids(batchC, jobids, verbose):
+def proc_jobids(batchC, jobids, terminate=False, verbose=False):
     jobstats= []
     arrayinfo = []
     results = [jobinfo, arrayinfo]
@@ -66,6 +66,10 @@ def proc_jobids(batchC, jobids, verbose):
     if noJobs > 0:
         jobs = jinfo["jobs"]
         for job in jobs:
+            if terminate:
+                jobid = job['jobId']
+                jobdel(batchC, jobid, True, verbose)
+                continue;
             jd = {}
             if verbose:
                 print("job info: \n")
@@ -199,7 +203,7 @@ def jobstat(batchC, jobid, arrayProperties, verbose):
 
     return results
 
-def jobdel(batchC, jobid, printout, verbose):
+def jobdel(batchC, jobid, printout=False, verbose=False):
     # describe the job
     try:
         results = batchC.describe_jobs(jobs = [ jobid ])
@@ -298,16 +302,17 @@ if not jiflag:
     jids = [jd['jobId'] for jd in jobslist]
 
     # process the job ids
-    jstats = proc_jobids(batchC, jobids = jids, verbose = debug)
+    jstats = proc_jobids(batchC, jids, terminate, debug)
 
-    # print out stats
-    if len(jstats) == 0:
-        print("No jobs found  : " + str(jids))
-        sys.exit(0)
-    print('Jobs status:')
-    jstats.sort()
-    for jd in jstats:
-        print(jd)
+    if not terminate:
+        # print out stats
+        if len(jstats) == 0:
+            print("No jobs found  : " + str(jids))
+            sys.exit(0)
+        print('Jobs status:')
+        jstats.sort()
+        for jd in jstats:
+            print(jd)
 else:
     # process the jobid
     if not terminate:
