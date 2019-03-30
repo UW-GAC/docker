@@ -62,3 +62,10 @@ RUN if [ -d /usr/local/analysis_pipeline ]; then \
     fi
 
 RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline /usr/local/analysis_pipeline
+
+# add the python scripts to enable outside world access
+ADD ap2batch.py /usr/local/bin
+ADD submit_job.py /usr/local/bin
+
+# add jstats to manage batch jobs
+ADD jstats.py /usr/local/bin
