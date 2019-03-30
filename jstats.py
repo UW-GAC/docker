@@ -239,7 +239,7 @@ def jobdel(batchC, jobid, printout=False, verbose=False):
 # parse input
 parser = ArgumentParser( description = "Get the statuses of jobs or terminate jobs from the job info file" )
 parser.add_argument( "jobinfo", nargs = 1, help = "jobinfo file or job id" )
-parser.add_argument( "-p", "--profile", default = "uw", help = "aws profile")
+parser.add_argument( "-p", "--profile", default = "nhlbi_compute", help = "aws profile")
 parser.add_argument( "-a", "--arraydetails", action="store_true", default = False,
                      help = "describe array details (if applicable) for specified job id [default: False]" )
 parser.add_argument( "-t", "--terminate", action="store_true", default = False,
