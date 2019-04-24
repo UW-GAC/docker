@@ -2,7 +2,7 @@ ARG base_name=apps
 ARG itag=latest
 FROM uwgac/$base_name:$itag
 
-ARG r_version=3.5.1
+ARG r_version=3.5.2
 # download R
 RUN mkdir /usr/local/src/R && \
     cd /usr/local/src/R && \
@@ -24,7 +24,12 @@ RUN echo "Building R with sequential MKL ..." && \
     make check && \
     make info && \
     make install
+# create link to R/Rscript
+RUN ln -sf /usr/local/R-$r_version/lib/R/bin/R /usr/local/bin/R_s && \
+    ln -sf /usr/local/R-$r_version/lib/R/bin/Rscript /usr/local/bin/Rscript_s
+
 # set config vars for building R with parallel mkl; config; make
+ARG p_version=${r_version}p
 RUN echo "Building R with parallel MKL ..." && \
     MKL_LIB_PATH=/opt/intel/mkl/lib/intel64 && \
     export LD_LIBRARY_PATH=$MKL_LIB_PATH && \
@@ -36,8 +41,19 @@ RUN echo "Building R with parallel MKL ..." && \
     make check && \
     make info && \
     make install
+# create link to R/Rscript
+RUN ln -sf /usr/local/R-$p_version/lib/R/bin/R /usr/local/bin/R_p && \
+    ln -sf /usr/local/R-$p_version/lib/R/bin/Rscript /usr/local/bin/Rscript_p
+
 # create the run-time links to mkl so's
 RUN echo "/opt/intel/mkl/lib/intel64" > /etc/ld.so.conf.d/mkl_intel64.conf
 
 # run ldconfig
 RUN ldconfig
+
+# add R_switch (to switch between sequential and parallel MKL versions of R)
+add R_switch /usr/local/bin/
+
+# make the default R to be the parallel version
+RUN ln -sf /usr/local/bin/R_p /usr/local/bin/R && \
+    ln -sf /usr/local/bin/Rscript_p /usr/local/bin/Rscript
