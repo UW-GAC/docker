@@ -7,15 +7,8 @@ ARG r_version
 # ==================
 # sequential version
 # ==================
-# create link to appropriate R
-RUN if [ -f /usr/local/bin/R ]; then \
-        unlink /usr/local/bin/R; \
-    fi
-RUN if [ -f /usr/local/bin/Rscript ]; then \
-        unlink /usr/local/bin/Rscript; \
-    fi
-RUN ln -s /usr/local/R-$r_version/lib/R/bin/R /usr/local/bin/R && \
-      ln -s /usr/local/R-$r_version/lib/R/bin/Rscript /usr/local/bin/Rscript
+# switch to appropriate R
+RUN R_switch s
 
 ENV ANALYSIS_PIPELINE_BRANCH=roybranch
 RUN echo "Building sequential version of  $ANALYSIS_PIPELINE_BRANCH ..."
@@ -39,15 +32,8 @@ RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s/analysis_pipeline /
 # ==================
 ARG p_version=${r_version}p
 RUN echo "Building parallel version of  $ANALYSIS_PIPELINE_BRANCH ..."
-# create link to appropriate R
-RUN if [ -f /usr/local/bin/R ]; then \
-        unlink /usr/local/bin/R; \
-    fi
-RUN if [ -f /usr/local/bin/Rscript ]; then \
-        unlink /usr/local/bin/Rscript; \
-    fi
-RUN ln -s /usr/local/R-$p_version/lib/R/bin/R /usr/local/bin/R && \
-    ln -s /usr/local/R-$p_version/lib/R/bin/Rscript /usr/local/bin/Rscript
+# switch to appropriate R
+RUN R_switch p
 
 # install devel topmed pipeline
 RUN mkdir /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p && \
@@ -61,7 +47,8 @@ RUN if [ -d /usr/local/analysis_pipeline ]; then \
        unlink /usr/local/analysis_pipeline; \
     fi
 
-RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline /usr/local/analysis_pipeline
+RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline /usr/local/analysis_pipeline_p
+RUN R_switch p
 
 # add the python scripts to enable outside world access
 ADD ap2batch.py /usr/local/bin
