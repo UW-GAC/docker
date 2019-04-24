@@ -1,0 +1,39 @@
+#!/bin/bash
+# Switch the default R to be either sequential or parallel version of MKL for R
+f () {
+    errcode=$? # save the exit code as the first thing done in the trap function
+    echo "error $errorcode"
+    echo "the command executing at the time of the error was"
+    echo "$BASH_COMMAND"
+    echo "on line ${BASH_LINENO[0]}"
+    # do some error handling, cleanup, logging, notification
+    # $BASH_COMMAND contains the command that was being executed at the time of the trap
+    # ${BASH_LINENO[0]} contains the line number in the script of that command
+    # exit the script or return to try again, etc.
+    exit $errcode  # or use some other value or do return instead
+}
+trap f ERR
+MKL_VERSION=${1:-p}
+if [ "$MKL_VERSION" = "p" ]; then
+    # R
+    ln -sf /usr/local/bin/R_p /usr/local/bin/R
+    ln -sf /usr/local/bin/Rscript_p /usr/local/bin/Rscript
+    echo "R is linked to the parallel MKL version"
+    # analysis pipeline
+    if [ -e /usr/local/analysis_pipeline_p ]; then
+        ln -sf /usr/local/analysis_pipeline_p /usr/local/analysis_pipeline
+    fi
+elif [ "$MKL_VERSION" = "s" ]; then
+    # R
+    ln -sf /usr/local/bin/R_s /usr/local/bin/R
+    ln -sf /usr/local/bin/Rscript_s /usr/local/bin/Rscript
+    echo "R is linked to the sequential MKL version"
+    # analysis pipeline
+    if [ -e /usr/local/analysis_pipeline_s ]; then
+        ln -sf /usr/local/analysis_pipeline_s /usr/local/analysis_pipeline
+    fi
+else
+    echo "Invalid MKL option - must be p or s ($MKL_VERSION)"
+    exit 1
+fi
+exit 0
