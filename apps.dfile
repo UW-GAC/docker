@@ -1,4 +1,4 @@
-ARG base_name=ubuntu-16.04-hpc
+ARG base_name=ubuntu-18.04-hpc
 ARG itag=latest
 FROM uwgac/$base_name:$itag
 
