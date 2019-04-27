@@ -87,9 +87,39 @@ RUN mkdir -p /usr/local/src/plink && \
     ln -s /usr/local/src/plink/plink /usr/local/bin/plink && \
     ln -s /usr/local/src/plink/prettify /usr/local/bin/prettify
 
-# kink
+# king
 RUN mkdir -p /usr/local/src/king && \
     cd /usr/local/src/king  && \
     wget http://people.virginia.edu/~wc9c/KING/Ubuntu-king.tar.gz && \
     tar -xf Ubuntu-king.tar.gz && \
     ln -s /usr/local/src/king/king /usr/local/bin/king
+
+# add the python scripts to enable outside world access
+ADD ap2batch.py /usr/local/bin
+ADD submit_job.py /usr/local/bin
+
+# add jstats to manage batch jobs
+ADD jstats.py /usr/local/bin
+
+# install sudo
+RUN apt-get update && apt-get install -y sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# add some users
+RUN groupadd -g 1002 topmed && \
+  useradd -m -s /bin/bash -r -u 1000 -g topmed ubuntu && \
+  useradd -m -s /bin/bash -r -u 1099 -g topmed analyst
+RUN adduser ubuntu sudo
+RUN adduser analyst sudo
+
+# create an .aws directory in everyone's home
+RUN mkdir ~/.aws && \
+  mkdir /home/ubuntu/.aws && \
+  mkdir /home/analyst/.aws
+
+# set umask to 002 so that files created via batch or docker can easily be managed
+# by users on the local computer (topmed-docker)
+
+RUN echo "umask    002" >> /root/.bashrc
+RUN echo "umask    002" >> /home/ubuntu/.bashrc
+RUN echo "umask    002" >> /home/analyst/.bashrc
