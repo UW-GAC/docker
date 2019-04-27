@@ -41,13 +41,16 @@ RUN apt-get update && apt-get install -y \
   libpango1.0-dev \
   pandoc \
   freeglut3-dev \
-  libdatetime-perl
-  # get gcc 4.8 for building topmed (Matrix bug)
-  RUN apt-get update && apt-get install g++-4.8 -y
-  RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
-  RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
-  # get mpich, openmpi, and hdf5
-  RUN apt-get update && apt-get install -y \
+  libdatetime-perl \
+  time
+
+# get gcc 4.8 for building topmed (Matrix bug)
+RUN apt-get update && apt-get install g++-4.8 -y
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
+RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
+
+# get mpich, openmpi, and hdf5
+RUN apt-get update && apt-get install -y \
     mpich \
     libmpich-dev \
     libmpich12 \
