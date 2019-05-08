@@ -21,7 +21,7 @@ RUN echo "Building R with sequential MKL ..." && \
     cd /usr/local/src/R/R-$r_version/build_sequential && \
     /usr/local/src/R/R-$r_version/configure --enable-R-shlib --enable-threads=posix --prefix=/usr/local/R-$r_version --with-blas="$MKL" --with-lapack && \
     make && \
-    make check && \
+#    make check && \
     make info && \
     make install
 # create link to R/Rscript
@@ -38,7 +38,7 @@ RUN echo "Building R with parallel MKL ..." && \
     cd /usr/local/src/R/R-$r_version/build_parallel && \
     /usr/local/src/R/R-$r_version/configure --enable-R-shlib --enable-threads=posix  --enable-R-shlib --enable-threads=posix --prefix=/usr/local/R-"$r_version"p  --with-blas="$MKL" --with-lapack && \
     make && \
-    make check && \
+#    make check && \
     make info && \
     make install
 # create link to R/Rscript
