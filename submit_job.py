@@ -154,9 +154,13 @@ def submitjob(a_submitParams):
     if key2 in submitOpts:
         submitOpts[key2].append( { "name": "NSLOTS",
                                    "value": str(request_cores) } )
+        submitOpts[key2].append( { "name": "MAX_NUM_THREADS",
+                                   "value": str(request_cores) } )
     else:
         submitOpts[key2]=[ { "name": "NSLOTS",
                              "value": str(request_cores) } ]
+        submitOpts[key2].append( { "name": "MAX_NUM_THREADS",
+                                   "value": str(request_cores) } )
 
     # get memory limit option
     if a_submitParams["maxmem"] != None:
