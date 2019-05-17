@@ -212,12 +212,12 @@ else:
 # summarize and check for required params
 Summary("Summary of " + __file__)
 
-# check if the mount point (last arg in mount command) exists; if not create it
-if po == 0:
-    if not os.path.isdir( mount.split()[-1] ):
-        os.mkdir(mount.split()[-1])
 # mount
 if bind == 0:
+    # check if the mount point (last arg in mount command) exists; if not create it
+    if po == 0:
+        if not os.path.isdir( mount.split()[-1] ):
+            os.mkdir(mount.split()[-1])
     pDebug( "mount tmo: " + tmo + " mount command: " + mount )
     flush()
     mtmo = "timeout " + tmo + " " + mount
