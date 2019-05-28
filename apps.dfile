@@ -94,9 +94,8 @@ RUN mkdir -p /usr/local/src/king && \
     tar -xf Ubuntu-king.tar.gz && \
     ln -s /usr/local/src/king/king /usr/local/bin/king
 
-# add the python scripts to enable outside world access
+# add script to run an analysis interactively
 ADD ap2batch.py /usr/local/bin
-ADD submit_job.py /usr/local/bin
 
 # add jstats to manage batch jobs
 ADD jstats.py /usr/local/bin
