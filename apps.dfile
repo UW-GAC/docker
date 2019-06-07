@@ -9,37 +9,27 @@ Run apt-get update && apt-get install -y libncurses5-dev
 RUN apt-get update && apt-get install -y curl
 
 ARG APP_BSRC=/usr/local/src
+ARG ST_SRC=$APP_BSRC/samtools
 ARG APP_BBIN=/usr/local/bin
+ARG ST_INSTALL=/usr/local
 # htslib and bcf tools
 ARG THE_APP=htslib
 RUN if [ ! -f /usr/local/lib/libhts.a ]; then \
         echo ">>> Installing $THE_APP ...";  \
-        if [ -d $APP_BSRC/$THE_APP ]; then \
+        if [ -d $ST_SRC ]; then \
             echo "ERROR: $APP_BSRC/$THE_APP exists";  \
             STOPSIGNAL 9;  \
         fi;  \
-        cd $APP_BSRC && \
-        git clone --branch=develop git://github.com/samtools/$THE_APP.git; \
+        mkdir -p $ST_SRC && \
+        cd $ST_SRC && \
+        wget https://github.com/samtools/htslib/releases/download/1.9/htslib-1.9.tar.bz2 && \
+        tar -xf htslib-1.9.tar.bz2 && \
+        cd htslib-1.9 && \
+        ./configure && \
+        make && \
+        make install ; \
     else  \
         "$THE_APP is already installed.";  \
-    fi
-
-# bcftools
-ARG THE_APP=bcftools
-RUN \
-    if ! which $THE_APP | grep $THE_APP > /dev/null; then  \
-        echo ">>> Installing $THE_APP ...";  \
-        if [ -d $APP_BSRC/$THE_APP ]; then  \
-            echo "ERROR: $APP_BSRC/$THE_APP exists";  \
-            exit 2;  \
-        fi;  \
-        cd $APP_BSRC && \
-        git clone --branch=develop git://github.com/samtools/$THE_APP.git &&  \
-        cd $THE_APP &&  \
-        make &&  \
-        make install;  \
-    else  \
-        echo "$THE_APP is already installed.";  \
     fi
 
 # sam tools
@@ -47,15 +37,29 @@ ARG THE_APP=samtools
 RUN \
     if ! which $THE_APP | grep $THE_APP > /dev/null; then  \
         echo ">>> Installing $THE_APP ...";  \
-        if [ -d $APP_BSRC/$THE_APP ]; then  \
-            echo "ERROR: $APP_BSRC/$THE_APP exists";  \
-            exit 2;  \
-        fi;  \
-        cd $APP_BSRC && \
-        git clone --branch=develop git://github.com/samtools/$THE_APP.git &&  \
-        cd $THE_APP &&  \
-        make &&  \
-        make install;  \
+        cd $ST_SRC && \
+        wget https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2 && \
+        tar -xf samtools-1.9.tar.bz2 && \
+        cd samtools-1.9 && \
+        ./configure && \
+        make && \
+        make install ; \
+    else  \
+        echo "$THE_APP is already installed.";  \
+    fi
+
+# bcftools
+ARG THE_APP=bcftools
+RUN \
+    if ! which $THE_APP | grep $THE_APP > /dev/null; then  \
+        echo ">>> Installing $THE_APP ...";  \
+        cd $ST_SRC && \
+        wget https://github.com/samtools/bcftools/releases/download/1.9/bcftools-1.9.tar.bz2 && \
+        tar -xf bcftools-1.9.tar.bz2 && \
+        cd bcftools-1.9 && \
+        ./configure && \
+        make && \
+        make install; \
     else  \
         echo "$THE_APP is already installed.";  \
     fi
@@ -90,8 +94,8 @@ RUN mkdir -p /usr/local/src/plink && \
 # king
 RUN mkdir -p /usr/local/src/king && \
     cd /usr/local/src/king  && \
-    wget http://people.virginia.edu/~wc9c/KING/Ubuntu-king.tar.gz && \
-    tar -xf Ubuntu-king.tar.gz && \
+    wget http://people.virginia.edu/~wc9c/KING/executables/Ubuntu-king22.tar.gz && \
+    tar -xf Ubuntu-king22.tar.gz && \
     ln -s /usr/local/src/king/king /usr/local/bin/king
 
 # add script to run an analysis interactively
