@@ -1,9 +1,11 @@
 ## docker ##
 
 This project builds various docker images associated with TOPMed.  By default the following docker images are built:
-- ubuntu-16.04-hpc
+- ubuntu-18.04-hpc
 - apps
-- r-3.5.2-mkl
+- r-3.6.1-mkl
+- tm-rpkgs-master
+- tm-rpkgs-devel
 - topmed-master
 - topmed-devel
 
@@ -28,7 +30,7 @@ make cfg=cache
 ```
 Additionally, the makefile's macros associated with the versions of software (e.g., ubuntu, R) and tags of the docker images can be changed via command line arguments.  For example:
 ```{r}
-make OS_VERSION=18.04 DTAG=18.04 R_VERSION=3.5.3
+make OS_VERSION=18.04 DTAG=18.04 R_VERSION=3.6.1
 ```
 The above command builds docker images based on ubuntu 18.04 and R 3.5.3; the tags of all images will be 18.04
 
@@ -55,8 +57,10 @@ The docker build files are:
 2. ubuntu-18.04-hpc.dfile - Builds a ubuntu-based image with hpc functionality.
 3. apps.dfile - From the ubuntu-based image, build an application image including the applications `samtools` and `locuszoom`.
 4. r-mkl.dfile - Build an R image from the application image using both sequential and parallel MKL.
-5. topmed-master.dfile - From the R image, build a TOPMed image using the master branch of the analysis pipeline.
-6. topmed-devel.dfile - From the R image, build a TOPMed image using the devel branch of the analysis pipeline.
+5. tm-rpkgs-master.dfile - Builds the R packages associated with analysis pipeline master branch
+6. tm-rpkgs-devel.dfile - Builds the R packages associated with analysis pipeline devel branch
+7. topmed-master.dfile - From the R image, build a TOPMed image using the master branch of the analysis pipeline.
+8. topmed-devel.dfile - From the R image, build a TOPMed image using the devel branch of the analysis pipeline.
 
 ## docker image names and tags ##
 The docker image names and tags are controlled by the makefile in conjunction with the docker build files.  The default names and tags are described in the following table:
@@ -66,14 +70,22 @@ The docker image names and tags are controlled by the makefile in conjunction wi
 | ubuntu-16.04-hpc.dfile | ubuntu-16.04-hpc | latest | ubuntu:16.04 |
 | ubuntu-18.04-hpc.dfile | ubuntu-18.04-hpc | latest | ubuntu:18.04
 | apps.dfile | apps | latest | ubuntu-xx.04-hpc |
-| r-mkl.dfile | r-3.5.2-mkl | latest | apps |
-| topmed-master.dfile | tomped-master | latest | r-3.x.x-mkl |
-| topmed-devel.dfile | topmed-devel | latest | r-3.x.x-mkl |
+| r-mkl.dfile | r-3.6.1-mkl | latest | apps |
+| tm-rpkgs-master.dfile | tm-rpkgs-master | latest | r-3.6.1-mkl |
+| tm-rpkgs-master.dfile | tm-rpkgs-devel | latest | r-3.6.1-mkl |
+| topmed-master.dfile | tomped-master | latest | tm-rpkgs-master |
+| topmed-devel.dfile | topmed-devel | latest | tm-rpkgs-devel |
 
-The default versions of software (e.g., `R 3.5.2`) is specified in both the makefile and the docker build files; but these versions can be changed either in the makefile or as options when executing the makefile.  For example, to build with R version 3.5.3:
+The default versions of software (e.g., `R 3.6.1`) is specified in both the makefile and the docker build files; but these versions can be changed either in the makefile or as options when executing the makefile.  For example, to build with R version 3.6.3:
 
 ```{r}
-make R_VERSION=3.5.3
+make R_VERSION=3.6.3
+```
+
+Additionally, an additional tag is manually added to the docker images `tomped-master` and `tomped-devel`.  The tag is the version of TopmedPipeline.py (`__version__ `).  For example,
+
+```{r}
+docker tag uwgac/topmed-master:latest uwgac/topmed-master:2.5.0
 ```
 ## python files ##
 The python files are:
