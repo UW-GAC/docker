@@ -2,7 +2,7 @@ ARG base_name=apps
 ARG itag=latest
 FROM uwgac/$base_name:$itag
 
-ARG r_version=3.5.2
+ARG r_version=3.6.1
 # download R
 RUN mkdir /usr/local/src/R && \
     cd /usr/local/src/R && \

@@ -8,6 +8,7 @@ import     subprocess
 from       argparse import ArgumentParser
 from       datetime import datetime, timedelta
 import     requests
+import     boto3
 
 # init globals
 version='2.0'
@@ -111,7 +112,7 @@ parser = ArgumentParser( description = "docker script to run tm analysis pipelin
 parser.add_argument( "-w", "--workdir",
                      help = "full path of working directory (where pipeline jobs are submitted)" )
 parser.add_argument( "-b", "--bindmount", type = int, default = 1,
-                     help = "bind-mount of data volumen via -v option in docker run [default: 1]" )
+                     help = "bind-mount of data volume via -v option in docker run [default: 1]" )
 parser.add_argument( "--rdriver", default = defaultRdriver,
                      help = "full path of pipeline R driver bash file [default: " + defaultRdriver + "]" )
 parser.add_argument( "-m", "--mountcmd", default = defaultMount,

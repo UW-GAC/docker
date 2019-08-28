@@ -1,51 +1,26 @@
 ARG itag=latest
-ARG r_version=3.5.2
-ARG base_name=topmed-devel
+ARG base_name=tm-rpkgs-devel
 FROM uwgac/$base_name:$itag
 
-ARG r_version
-# ==================
-# sequential version
-# ==================
-# switch to appropriate R
-RUN R_switch s
-
 ENV ANALYSIS_PIPELINE_BRANCH=roybranch
-RUN echo "Building sequential version of  $ANALYSIS_PIPELINE_BRANCH ..."
-
-# install roybranch topmed pipeline
-RUN mkdir /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s && \
-  cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s && \
-  git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git && \
-  cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s/analysis_pipeline && \
-  R CMD INSTALL TopmedPipeline
-
-# create a link analysis_pipeline
-RUN if [ -d /usr/local/analysis_pipeline_s ]; then \
-       unlink /usr/local/analysis_pipeline_s; \
+RUN echo "Pulling $ANALYSIS_PIPELINE_BRANCH branch analysis from github ..."
+# unlink analysis_pipeline
+RUN if [ -d /usr/local/analysis_pipeline ]; then  \
+         unlink /usr/local/analysis_pipeline; \
     fi
 
-RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s/analysis_pipeline /usr/local/analysis_pipeline_s
+# clone topmed pipeline (roybranch)
+RUN mkdir /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH} && \
+    cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH} && \
+    git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git
 
-# ==================
-# parallel version
-# ==================
-ARG p_version=${r_version}p
-RUN echo "Building parallel version of  $ANALYSIS_PIPELINE_BRANCH ..."
-# switch to appropriate R
-RUN R_switch p
+# ==========================================
+# create link to analysis analysis_pipeline
+# ==========================================
+RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}/analysis_pipeline /usr/local/analysis_pipeline
 
-# install roybranch topmed pipeline
-RUN mkdir /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p && \
-  cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p && \
-  git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git && \
-  cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline && \
-  R CMD INSTALL TopmedPipeline
+# analysis pipeline entry point
+ADD ap2batch.py /usr/local/bin
 
-# create a link analysis_pipeline
-RUN if [ -d /usr/local/analysis_pipeline_p ]; then \
-       unlink /usr/local/analysis_pipeline_p; \
-    fi
-
-RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline /usr/local/analysis_pipeline_p
-RUN R_switch p
+# add jstats to manage batch jobs
+ADD jstats.py /usr/local/bin

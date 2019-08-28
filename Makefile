@@ -3,7 +3,7 @@ DB = $(DC) build
 D_REP = uwgac
 OS_VERSION = 18.04
 #R_VERSION = 3.5.2
-R_VERSION=3.6.0
+R_VERSION=3.6.1
 #MKL_VERSION = 2018.1.163
 MKL_VERSION = 2019.2.187
 #RS_VERSION = 1.1.447
@@ -21,6 +21,8 @@ DB_OPTS = $(DB_FLAGS) $(CACHE_OPT)
 DI_OS = $(DF_BASE_OS)-$(OS_VERSION)-hpc
 DI_R = r-$(R_VERSION)-mkl
 DI_APPS = apps
+DI_RPKGS_MASTER = tm-rpkgs-master
+DI_RPKGS_DEVEL = tm-rpkgs-devel
 DI_TM_MASTER = topmed-master
 DI_TM_DEVEL = topmed-devel
 DI_TM_RB = topmed-roybranch
@@ -31,6 +33,8 @@ DF_BASE_OS = ubuntu
 DF_OS = $(DF_BASE_OS)-$(OS_VERSION)-hpc.dfile
 DF_APPS = apps.dfile
 DF_R = r-mkl.dfile
+DF_RPKGS_MASTER = tm-rpkgs-master.dfile
+DF_RPKGS_DEVEL = tm-rpkgs-devel.dfile
 DF_TM_MASTER = topmed-master.dfile
 DF_TM_DEVEL = topmed-devel.dfile
 DF_TM_RB = topmed-roybranch.dfile
@@ -40,12 +44,14 @@ DF_TM_RS = topmed-rstudio.dfile
 DT_OS = $(DTAG)
 DT_R = $(DTAG)
 DT_APPS = $(DTAG)
+DT_RPKGS_MASTER = $(DTAG)
+DT_RPKGS_DEVEL = $(DTAG)
 DT_TM_MASTER = $(DTAG)
 DT_TM_DEVEL = $(DTAG)
 DT_TM_RB = $(DTAG)
 DT_TM_RS = $(DTAG)
 
-D_IMAGES = $(DI_OS) $(DI_APPS) $(DI_R) $(DI_TM_MASTER) $(DI_TM_DEVEL) $(DI_TM_RB) $(DI_TM_RS)
+D_IMAGES = $(DI_OS) $(DI_APPS) $(DI_R) $(DI_RPKGS_DEVEL) $(DI_TM_MASTER) $(DI_TM_MASTER) $(DI_TM_DEVEL) $(DI_TM_RB) $(DI_TM_RS)
 D_PUSH = $(addsuffix .push,$(D_IMAGES))
 D_IMAGES_IMG = $(addsuffix .image,$(D_IMAGES))
 .PHONY:  all
@@ -76,25 +82,39 @@ $(DI_R).image: $(DF_R) $(DI_APPS).image
         --build-arg itag=$(DT_APPS) -f $(DF_R) . > build_$(DI_R).log
 	touch $(DI_R).image
 
-$(DI_TM_MASTER).image: $(DF_TM_MASTER) $(DI_R).image
+$(DI_RPKGS_MASTER).image: $(DF_RPKGS_MASTER) $(DI_R).image
+	@echo ">>> "Building $(D_REP)/$(DI_RPKGS_MASTER):$(DT_RPKGS_MASTER)
+	$(DB) -t $(D_REP)/$(DI_RPKGS_MASTER):$(DT_RPKGS_MASTER) $(DB_OPTS) \
+        --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_R) \
+        --build-arg itag=$(DT_R) -f $(DF_RPKGS_MASTER) . > build_$(DI_RPKGS_MASTER).log
+	touch $(DI_RPKGS_MASTER).image
+
+$(DI_RPKGS_DEVEL).image: $(DF_RPKGS_DEVEL) $(DI_R).image
+	@echo ">>> "Building $(D_REP)/$(DI_RPKGS_DEVEL):$(DT_RPKGS_DEVEL)
+	$(DB) -t $(D_REP)/$(DI_RPKGS_DEVEL):$(DT_RPKGS_DEVEL) $(DB_OPTS) \
+        --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_R) \
+        --build-arg itag=$(DT_R) -f $(DF_RPKGS_DEVEL) . > build_$(DI_RPKGS_DEVEL).log
+	touch $(DI_RPKGS_DEVEL).image
+
+$(DI_TM_MASTER).image: $(DF_TM_MASTER) $(DI_RPKGS_MASTER).image
 	@echo ">>> "Building $(D_REP)/$(DI_TM_MASTER):$(DT_TM_MASTER)
 	$(DB) -t $(D_REP)/$(DI_TM_MASTER):$(DT_TM_MASTER) $(DB_OPTS)  \
-        --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_R) \
-        --build-arg itag=$(DT_R) -f $(DF_TM_MASTER) . > build_$(DI_TM_MASTER).log
+        --build-arg base_name=$(DI_RPKGS_MASTER) \
+        --build-arg itag=$(DT_RPKGS_MASTER) -f $(DF_TM_MASTER) . > build_$(DI_TM_MASTER).log
 	touch $(DI_TM_MASTER).image
 
-$(DI_TM_DEVEL).image: $(DF_TM_DEVEL) $(DI_R).image
+$(DI_TM_DEVEL).image: $(DF_TM_DEVEL) $(DI_RPKGS_DEVEL).image
 	@echo ">>> "Building $(D_REP)/$(DI_TM_DEVEL):$(DT_TM_DEVEL)
 	$(DB) -t $(D_REP)/$(DI_TM_DEVEL):$(DT_TM_DEVEL) $(DB_OPTS)  \
-        --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_R) \
-        --build-arg itag=$(DT_R) -f $(DF_TM_DEVEL) . > build_$(DI_TM_DEVEL).log
+        --build-arg base_name=$(DI_RPKGS_DEVEL) \
+        --build-arg itag=$(DT_RPKGS_DEVEL) -f $(DF_TM_DEVEL) . > build_$(DI_TM_DEVEL).log
 	touch $(DI_TM_DEVEL).image
 
-$(DI_TM_RB).image: $(DF_TM_RB) $(DI_TM_DEVEL).image
+$(DI_TM_RB).image: $(DF_TM_RB) $(DI_RPKGS_DEVEL).image
 	@echo ">>> "Building $(D_REP)/$(DI_TM_RB):$(DT_TM_RB)
 	$(DB) -t $(D_REP)/$(DI_TM_RB):$(DT_TM_RB) $(DB_OPTS)  \
-        --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_TM_DEVEL) \
-        --build-arg itag=$(DT_TM_DEVEL) -f $(DF_TM_RB) . > build_$(DI_TM_RB).log
+        --build-arg base_name=$(DI_RPKGS_DEVEL) \
+        --build-arg itag=$(DT_RPKGS_DEVEL) -f $(DF_TM_RB) . > build_$(DI_TM_RB).log
 	touch $(DI_TM_RB).image
 
 $(DI_TM_RS).image: $(DF_TM_RS) $(DI_TM_MASTER).image

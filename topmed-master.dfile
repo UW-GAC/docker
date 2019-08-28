@@ -1,57 +1,16 @@
 ARG itag=latest
-ARG r_version=3.5.2
-ARG base_name=r-${r_version}-mkl
+ARG base_name=tm-rpkgs-master
 FROM uwgac/$base_name:$itag
 
-ARG r_version
-# ==================
-# sequential version
-# ==================
-# switch to appropriate R
-RUN R_switch s
-
 ENV ANALYSIS_PIPELINE_BRANCH=master
-RUN echo "Building sequential version of  $ANALYSIS_PIPELINE_BRANCH ..."
+RUN echo "Pulling $ANALYSIS_PIPELINE_BRANCH branch analysis from github ..."
 
-# install topmed pipeline
-ENV ANALYSIS_PIPELINE_BRANCH=master
-RUN mkdir /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s && \
-    cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s && \
-    git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git
+RUN cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}/analysis_pipeline && \
+    git checkout ${ANALYSIS_PIPELINE_BRANCH} && \
+    git pull origin ${ANALYSIS_PIPELINE_BRANCH}
 
-# execute R script to install topmed packages
-RUN cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s/analysis_pipeline && \
-    Rscript --vanilla --no-save --slave install_packages.R
+# analysis pipeline entry point
+ADD ap2batch.py /usr/local/bin
 
-# create a link analysis_pipeline
-RUN if [ -d /usr/local/analysis_pipeline_s ]; then \
-        unlink /usr/local/analysis_pipeline_s; \
-    fi
-
-RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}s/analysis_pipeline /usr/local/analysis_pipeline_s
-
-# ==================
-# parallel version
-# ==================
-ARG p_version=${r_version}p
-# switch to appropriate R
-RUN R_switch p
-
-# install topmed pipeline
-ENV ANALYSIS_PIPELINE_BRANCH=master
-RUN mkdir /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p && \
-    cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p && \
-    git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git
-
-# execute R script to install topmed packages
-RUN cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline && \
-    Rscript --vanilla --no-save --slave install_packages.R
-
-# create a link analysis_pipeline
-RUN if [ -d /usr/local/analysis_pipeline ]; then \
-        unlink /usr/local/analysis_pipeline; \
-    fi
-
-
-RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}p/analysis_pipeline /usr/local/analysis_pipeline_p
-RUN R_switch p
+# add jstats to manage batch jobs
+ADD jstats.py /usr/local/bin

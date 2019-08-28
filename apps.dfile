@@ -2,6 +2,11 @@ ARG base_name=ubuntu-18.04-hpc
 ARG itag=latest
 FROM uwgac/$base_name:$itag
 
+ARG itag=latest
+ARG r_version=3.6.1
+ARG base_name=r-${r_version}-mkl
+FROM uwgac/$base_name:$itag
+
 
 # need curses5
 Run apt-get update && apt-get install -y libncurses5-dev
@@ -97,12 +102,6 @@ RUN mkdir -p /usr/local/src/king && \
     wget http://people.virginia.edu/~wc9c/KING/executables/Ubuntu-king22.tar.gz && \
     tar -xf Ubuntu-king22.tar.gz && \
     ln -s /usr/local/src/king/king /usr/local/bin/king
-
-# add script to run an analysis interactively
-ADD ap2batch.py /usr/local/bin
-
-# add jstats to manage batch jobs
-ADD jstats.py /usr/local/bin
 
 # install sudo
 RUN apt-get update && apt-get install -y sudo
