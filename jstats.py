@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+from __future__ import division
 import os
 import sys
 import time
@@ -78,7 +79,7 @@ def proc_jobids(batchC, jobids, terminate=False, verbose=False):
                 print("\t" + str(job))
             jobtype = "single"
             jobstatus = job['status']
-            if "arrayProperties" in job.keys():
+            if "arrayProperties" in list(job.keys()):
                 jobtype = "array"
                 # for an array job, see if any of the tasks are running
                 tstats = arraystat(batchC, job, verbose)
@@ -120,25 +121,25 @@ def taskstat(batchC, jobid, noTasks, verbose):
             stopTime = "N/A"
             tfmt = "%A, %B %d, %Y %I:%M:%S %p"
             key = "startedAt"
-            if key in theJob.keys():
+            if key in list(theJob.keys()):
                 tTime = theJob[key]
-                startTime = datetime.fromtimestamp(tTime/1000).strftime(tfmt)
+                startTime = datetime.fromtimestamp((tTime/1000)).strftime(tfmt)
             key = "stoppedAt"
-            if key in theJob.keys():
+            if key in list(theJob.keys()):
                 tTime = theJob[key]
-                stopTime = datetime.fromtimestamp(tTime/1000).strftime(tfmt)
+                stopTime = datetime.fromtimestamp((tTime/1000)).strftime(tfmt)
             tinfo["a. task_id"] = tid
             tinfo["b. \tstart time"] = startTime
             tinfo["c. \tend time"] = stopTime
             tinfo["d. \tindex"] = index
             statusreason = "N/A"
             key = "statusReason"
-            if key in theJob["container"].keys():
+            if key in list(theJob["container"].keys()):
                 statusreason = theJob["container"][key]
             tinfo["e. \tstatus"] = statusreason
             statusinfo = "N/A"
             key = "reason"
-            if key in theJob["container"].keys():
+            if key in list(theJob["container"].keys()):
                 statusinfo = theJob["container"][key]
             tinfo["f. \tstatus info"] = statusinfo
             taskinfo.append(tinfo)
@@ -164,23 +165,23 @@ def jobstat(batchC, jobid, arrayProperties, verbose):
         stopTime = "N/A"
         tfmt = "%A, %B %d, %Y %I:%M:%S %p"
         key = "startedAt"
-        if key in theJob.keys():
+        if key in list(theJob.keys()):
             tTime = theJob[key]
-            startTime = datetime.fromtimestamp(tTime/1000).strftime(tfmt)
+            startTime = datetime.fromtimestamp((tTime/1000)).strftime(tfmt)
         key = "stoppedAt"
-        if key in theJob.keys():
+        if key in list(theJob.keys()):
             tTime = theJob[key]
-            stopTime = datetime.fromtimestamp(tTime/1000).strftime(tfmt)
+            stopTime = datetime.fromtimestamp((tTime/1000)).strftime(tfmt)
         jobinfo["a. jobName"] = theJob["jobName"]
         jobinfo["j. jobQueue"] = theJob["jobQueue"]
         jobinfo["b. status"] = theJob["status"]
         statusinfo = "N/A"
         key = "reason"
-        if key in theJob["container"].keys():
+        if key in list(theJob["container"].keys()):
             statusinfo = theJob["container"]["reason"]
         else:
             key = "statusReason"
-            if key in theJob.keys():
+            if key in list(theJob.keys()):
                 statusinfo = theJob[key]
         jobinfo["c. status info"] = statusinfo
         jobinfo["d. jobId"] = theJob["jobId"]
@@ -192,7 +193,7 @@ def jobstat(batchC, jobid, arrayProperties, verbose):
         # check if array
         key = "arrayProperties"
         ikey = "k. arrayjob"
-        if key in theJob.keys():
+        if key in list(theJob.keys()):
             jobinfo[ikey] = "yes"
         else:
             jobinfo[ikey] = "no"
@@ -272,7 +273,7 @@ if not idflag:
             # get the vals
             vals = [s for s in ll if not any(':' in i for i in s)]
             # create a dict and append to the jobslist
-            jdict = dict(zip(keys, vals))
+            jdict = dict(list(zip(keys, vals)))
             if len(jdict) == 0:
                 continue
             jobslist.append(jdict)
