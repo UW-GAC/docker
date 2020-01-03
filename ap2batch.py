@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 import     time
 import     csv
 import     sys
@@ -8,7 +8,6 @@ import     subprocess
 from       argparse import ArgumentParser
 from       datetime import datetime, timedelta
 import     requests
-import     boto3
 
 # init globals
 version='2.0'
@@ -58,16 +57,16 @@ def flush():
 
 def pInfo(msg):
     tmsg=time.asctime()
-    print msgInfoPrefix+tmsg+": "+msg
+    print(msgInfoPrefix+tmsg+": "+msg)
 
 def pError(msg):
     tmsg=time.asctime()
-    print msgErrPrefix+tmsg+": "+msg
+    print(msgErrPrefix+tmsg+": "+msg)
 
 def pDebug(msg):
     if debug:
         tmsg=time.asctime()
-        print debugPrefix+tmsg+": "+msg
+        print(debugPrefix+tmsg+": "+msg)
 def Summary(hdr):
     print(hdr)
     print( '\tVersion: ' + version)
@@ -112,7 +111,7 @@ parser = ArgumentParser( description = "docker script to run tm analysis pipelin
 parser.add_argument( "-w", "--workdir",
                      help = "full path of working directory (where pipeline jobs are submitted)" )
 parser.add_argument( "-b", "--bindmount", type = int, default = 1,
-                     help = "bind-mount of data volume via -v option in docker run [default: 1]" )
+                     help = "bind-mount of data volumen via -v option in docker run [default: 1]" )
 parser.add_argument( "--rdriver", default = defaultRdriver,
                      help = "full path of pipeline R driver bash file [default: " + defaultRdriver + "]" )
 parser.add_argument( "-m", "--mountcmd", default = defaultMount,
@@ -213,12 +212,12 @@ else:
 # summarize and check for required params
 Summary("Summary of " + __file__)
 
+# check if the mount point (last arg in mount command) exists; if not create it
+if po == 0:
+    if not os.path.isdir( mount.split()[-1] ):
+        os.mkdir(mount.split()[-1])
 # mount
 if bind == 0:
-    # check if the mount point (last arg in mount command) exists; if not create it
-    if po == 0:
-        if not os.path.isdir( mount.split()[-1] ):
-            os.mkdir(mount.split()[-1])
     pDebug( "mount tmo: " + tmo + " mount command: " + mount )
     flush()
     mtmo = "timeout " + tmo + " " + mount
