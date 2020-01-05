@@ -1,0 +1,29 @@
+ARG itag=latest
+ARG rs_version=1.1.447
+ARG base_name=topmed-master
+FROM uwgac/$base_name:$itag
+
+ARG rs_version
+# add an rstudio user
+RUN useradd -m -s /bin/bash -r -u 2001 rstudio
+RUN (echo "rstudio:rstudio"|chpasswd)
+
+# add locale
+RUN apt-get update && apt-get install -y locales
+RUN locale-gen en_US.UTF-8
+
+# install rstudio
+RUN apt-get update && apt-get install -y \
+  net-tools \
+  gdebi-core
+RUN wget https://download2.rstudio.org/server/bionic/amd64/rstudio-server-${rs_version}-amd64.deb
+RUN gdebi -n rstudio-server-${rs_version}-amd64.deb
+# disable armor (some of armor is missing for rstudio)
+RUN echo server-app-armor-enabled=0 >> /etc/rstudio/rserver.conf
+RUN rstudio-server start
+
+# expose port 8787 and create the default command to run the server as
+# a non-daemon (so when started detached the image hangs around)
+EXPOSE 8787
+
+CMD ["/usr/lib/rstudio-server/bin/rserver", "--server-daemonize", "off"]

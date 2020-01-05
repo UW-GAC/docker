@@ -18,6 +18,9 @@ RUN apt-get update && apt-get install -y \
   python-pip \
   python-numpy \
   python-matplotlib \
+  python3-pip \
+  python3-numpy \
+  python3-matplotlib \
   wget \
   cpio \
   iputils-ping \
@@ -44,10 +47,9 @@ RUN apt-get update && apt-get install -y \
   libdatetime-perl \
   time
 
-# get gcc 4.8 for building topmed (Matrix bug)
-RUN apt-get update && apt-get install g++-4.8 -y
-RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
-RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50
+# install sudo
+RUN apt-get update && apt-get install -y sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 # get mpich, openmpi, and hdf5
 RUN apt-get update && apt-get install -y \
@@ -71,3 +73,11 @@ RUN echo "\n\n*** building mkl ... ***\n\n" && \
   cd /usr/local/src/mkl/l_mkl_$mkl_version && \
   sed 's/ACCEPT_EULA=decline/ACCEPT_EULA=accept/g' silent.cfg > silent_build.cfg && \
   ./install.sh --silent ./silent_build.cfg
+
+# upgrade
+RUN apt-get update && apt-get -y dist-upgrade
+
+# get gcc 4.8 for building topmed (Matrix bug)
+RUN apt-get update && apt-get install g++-4.8 -y
+RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 50
+RUN update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 50

@@ -1,62 +1,79 @@
+# common config macros (changing)
+GTAG = python3
+#GTAG = roybranch
+#GTAG = devel
+#GTAG = master
+OS_VERSION = 18.04
+R_VERSION=3.6.1
+MKL_VERSION = 2019.2.187
+RS_VERSION=1.2.1335
+DTAG = 2.6
+
+# other common macros (not changing much)
 DC = docker
 DB = $(DC) build
 D_REP = uwgac
-OS_VERSION = 18.04
-#R_VERSION = 3.5.2
-R_VERSION=3.6.1
-#MKL_VERSION = 2018.1.163
-MKL_VERSION = 2019.2.187
-#RS_VERSION = 1.1.447
-#RS_VERSION = 1.1.463
-RS_VERSION=1.2.1335
-DTAG = latest
-DB_FLAGS =
+DO_FLAGS =
 ifeq ($(cfg),cache)
 	CACHE_OPT =
 else
 	CACHE_OPT = --no-cache
 endif
-DB_OPTS = $(DB_FLAGS) $(CACHE_OPT)
-# docker image names
-DI_OS = $(DF_BASE_OS)-$(OS_VERSION)-hpc
-DI_R = r-$(R_VERSION)-mkl
-DI_APPS = apps
-DI_RPKGS_MASTER = tm-rpkgs-master
-DI_RPKGS_DEVEL = tm-rpkgs-devel
-DI_TM_MASTER = topmed-master
-DI_TM_DEVEL = topmed-devel
-DI_TM_RB = topmed-roybranch
-DI_TM_RS = topmed-rstudio
 
-# docker files
-DF_BASE_OS = ubuntu
-DF_OS = $(DF_BASE_OS)-$(OS_VERSION)-hpc.dfile
-DF_APPS = apps.dfile
-DF_R = r-mkl.dfile
-DF_RPKGS_MASTER = tm-rpkgs-master.dfile
-DF_RPKGS_DEVEL = tm-rpkgs-devel.dfile
-DF_TM_MASTER = topmed-master.dfile
-DF_TM_DEVEL = topmed-devel.dfile
-DF_TM_RB = topmed-roybranch.dfile
-DF_TM_RS = topmed-rstudio.dfile
+# base name macros
+DB_OPTS = $(DO_FLAGS) $(CACHE_OPT)
+DB_LINUX = ubuntu
+DB_OS = $(DB_LINUX)-$(OS_VERSION)-hpc
+DB_R = r-mkl
+DB_TM = topmed
+DB_APPS = apps
+DB_PKGS = tm-rpkgs
+DB_RS = tm-rstudio
 
-# docker image tags
+# macros of docker build file names
+DF_OS = $(DB_OS).dfile
+DF_APPS = $(DB_APPS).dfile
+DF_R = $(DB_R).dfile
+DF_PKGS = $(DB_PKGS).dfile
+DF_TM = $(DB_TM).dfile
+DF_RS = $(DB_RS).dfile
+
+# macros of docker image tags
 DT_OS = $(DTAG)
 DT_R = $(DTAG)
 DT_APPS = $(DTAG)
-DT_RPKGS_MASTER = $(DTAG)
-DT_RPKGS_DEVEL = $(DTAG)
-DT_TM_MASTER = $(DTAG)
-DT_TM_DEVEL = $(DTAG)
-DT_TM_RB = $(DTAG)
-DT_TM_RS = $(DTAG)
+DT_PKGS = $(DTAG)
+DT_TM = $(DTAG)
+DT_RS = $(DTAG)
 
-D_IMAGES = $(DI_OS) $(DI_APPS) $(DI_R) $(DI_RPKGS_DEVEL) $(DI_TM_MASTER) $(DI_TM_MASTER) $(DI_TM_DEVEL) $(DI_TM_RB) $(DI_TM_RS)
+# macros of docker image names
+DI_OS = $(DB_OS)
+DI_R = r-$(R_VERSION)-mkl
+DI_APPS = $(DB_APPS)
+DI_PKGS = $(DB_PKGS)-$(GTAG)
+DI_TM = $(DB_TM)-$(GTAG)
+DI_RS = $(DB_RS)-$(GTAG)
+D_IMAGES = $(DI_OS) $(DI_APPS) $(DI_R) $(DI_PKGS) $(DI_TM) $(DI_TM_RS)
+D_ALL_IMAGES = $(addsuffix .image,$(D_IMAGES))
 D_PUSH = $(addsuffix .push,$(D_IMAGES))
-D_IMAGES_IMG = $(addsuffix .image,$(D_IMAGES))
+# summary
+ifeq ($(GTAG),master)
+	TM_BASENAME=$(DI_PKGS)
+else ifeq ($(GTAG),devel)
+	TM_BASENAME=$(DI_PKGS)
+else ifeq ($(GTAG),roybranch)
+	TM_BASENAME=$(DB_PKGS)-devel
+else ifeq ($(GTAG),python3)
+	TM_BASENAME=$(DB_PKGS)-devel
+else
+	TM_BASENAME=$(DB_PKGS)-devel
+	GTAG=roybranch
+endif
+
+# do stuff
 .PHONY:  all
 
-all: $(D_IMAGES_IMG)
+all: $(D_ALL_IMAGES)
 	@echo ">>> Build is complete"
 
 push: $(D_PUSH)
@@ -64,65 +81,65 @@ push: $(D_PUSH)
 
 $(DI_OS).image: $(DF_OS)
 	@echo ">>> "Building $(D_REP)/$(DI_OS):$(DT_OS)
-	$(DB) -t $(D_REP)/$(DI_OS):$(DT_OS) $(DB_OPTS) --build-arg base_os=$(DF_BASE_OS) \
+	$(DB) -t $(D_REP)/$(DI_OS):$(DT_OS) $(DB_OPTS) --build-arg base_os=$(DB_LINUX) \
         --build-arg mkl_version=$(MKL_VERSION) --build-arg itag=$(OS_VERSION) -f $(DF_OS) . > build_$(DI_OS).log
+	$(DC) tag $(D_REP)/$(DI_OS):$(DT_OS) $(D_REP)/$(DI_OS):latest
 	touch $(DI_OS).image
 
 $(DI_APPS).image: $(DF_APPS) $(DI_OS).image
 	@echo ">>> "Building $(D_REP)/$(DI_APPS):$(DT_APPS)
 	$(DB) -t $(D_REP)/$(DI_APPS):$(DT_APPS) $(DB_OPTS) \
         --build-arg base_name=$(DI_OS) \
-        --build-arg itag=$(DT_OS) -f $(DF_APPS) . > build_$(DI_APPS).log
+        --build-arg itag=latest -f $(DF_APPS) . > build_$(DI_APPS).log
+	$(DC) tag $(D_REP)/$(DI_APPS):$(DT_APPS) $(D_REP)/$(DI_APPS):latest
 	touch $(DI_APPS).image
 
 $(DI_R).image: $(DF_R) $(DI_APPS).image
 	@echo ">>> "Building $(D_REP)/$(DI_R):$(DT_R)
 	$(DB) -t $(D_REP)/$(DI_R):$(DT_R) $(DB_OPTS) \
         --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_APPS) \
-        --build-arg itag=$(DT_APPS) -f $(DF_R) . > build_$(DI_R).log
+        --build-arg itag=latest -f $(DF_R) . > build_$(DI_R).log
+	$(DC) tag $(D_REP)/$(DI_R):$(DT_R) $(D_REP)/$(DI_R):latest
 	touch $(DI_R).image
 
-$(DI_RPKGS_MASTER).image: $(DF_RPKGS_MASTER) $(DI_R).image
-	@echo ">>> "Building $(D_REP)/$(DI_RPKGS_MASTER):$(DT_RPKGS_MASTER)
-	$(DB) -t $(D_REP)/$(DI_RPKGS_MASTER):$(DT_RPKGS_MASTER) $(DB_OPTS) \
+$(DI_PKGS).image: $(DF_PKGS) $(DI_R).image
+ifeq ($(GTAG),roybranch)
+	@echo ">>> "Building R packages for git branch $(GTAG) is not needed
+	touch $(DI_PKGS).image
+else ifeq ($(GTAG),python3)
+	@echo ">>> "Building R packages for git branch $(GTAG) is not needed
+	touch $(DI_PKGS).image
+else
+	@echo ">>> "Building $(D_REP)/$(DI_PKGS):$(DT_PKGS) from git branch $(GTAG)
+	$(DB) -t $(D_REP)/$(DI_PKGS):$(DT_PKGS) $(DB_OPTS) \
         --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_R) \
-        --build-arg itag=$(DT_R) -f $(DF_RPKGS_MASTER) . > build_$(DI_RPKGS_MASTER).log
-	touch $(DI_RPKGS_MASTER).image
+        --build-arg itag=latest --build-arg git_branch=$(GTAG) \
+        -f $(DF_PKGS) . > build_$(DI_PKGS).log
+	$(DC) tag $(D_REP)/$(DI_PKGS):$(DT_PKGS) $(D_REP)/$(DI_PKGS):latest
+	touch $(DI_PKGS).image
+endif
 
-$(DI_RPKGS_DEVEL).image: $(DF_RPKGS_DEVEL) $(DI_R).image
-	@echo ">>> "Building $(D_REP)/$(DI_RPKGS_DEVEL):$(DT_RPKGS_DEVEL)
-	$(DB) -t $(D_REP)/$(DI_RPKGS_DEVEL):$(DT_RPKGS_DEVEL) $(DB_OPTS) \
-        --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_R) \
-        --build-arg itag=$(DT_R) -f $(DF_RPKGS_DEVEL) . > build_$(DI_RPKGS_DEVEL).log
-	touch $(DI_RPKGS_DEVEL).image
+$(DI_TM).image: $(DF_TM) $(DI_PKGS).image
+	@echo ">>> "Building $(D_REP)/$(DI_TM):$(DT_TM) from git branch $(GTAG)
+	$(DB) -t $(D_REP)/$(DI_TM):$(DT_TM) $(DB_OPTS)  \
+        --build-arg base_name=$(TM_BASENAME) --build-arg itag=latest \
+        --build-arg git_branch=$(GTAG) -f $(DF_TM) . > build_$(DI_TM).log
+	$(DC) tag $(D_REP)/$(DI_TM):$(DT_TM) $(D_REP)/$(DI_TM):latest
+	touch $(DI_TM).image
 
-$(DI_TM_MASTER).image: $(DF_TM_MASTER) $(DI_RPKGS_MASTER).image
-	@echo ">>> "Building $(D_REP)/$(DI_TM_MASTER):$(DT_TM_MASTER)
-	$(DB) -t $(D_REP)/$(DI_TM_MASTER):$(DT_TM_MASTER) $(DB_OPTS)  \
-        --build-arg base_name=$(DI_RPKGS_MASTER) \
-        --build-arg itag=$(DT_RPKGS_MASTER) -f $(DF_TM_MASTER) . > build_$(DI_TM_MASTER).log
-	touch $(DI_TM_MASTER).image
-
-$(DI_TM_DEVEL).image: $(DF_TM_DEVEL) $(DI_RPKGS_DEVEL).image
-	@echo ">>> "Building $(D_REP)/$(DI_TM_DEVEL):$(DT_TM_DEVEL)
-	$(DB) -t $(D_REP)/$(DI_TM_DEVEL):$(DT_TM_DEVEL) $(DB_OPTS)  \
-        --build-arg base_name=$(DI_RPKGS_DEVEL) \
-        --build-arg itag=$(DT_RPKGS_DEVEL) -f $(DF_TM_DEVEL) . > build_$(DI_TM_DEVEL).log
-	touch $(DI_TM_DEVEL).image
-
-$(DI_TM_RB).image: $(DF_TM_RB) $(DI_RPKGS_DEVEL).image
-	@echo ">>> "Building $(D_REP)/$(DI_TM_RB):$(DT_TM_RB)
-	$(DB) -t $(D_REP)/$(DI_TM_RB):$(DT_TM_RB) $(DB_OPTS)  \
-        --build-arg base_name=$(DI_RPKGS_DEVEL) \
-        --build-arg itag=$(DT_RPKGS_DEVEL) -f $(DF_TM_RB) . > build_$(DI_TM_RB).log
-	touch $(DI_TM_RB).image
-
-$(DI_TM_RS).image: $(DF_TM_RS) $(DI_TM_MASTER).image
-	@echo ">>> "Building $(D_REP)/$(DI_TM_RS):$(DT_TM_RS)
-	$(DB) -t $(D_REP)/$(DI_TM_RS):$(DT_TM_RS) $(DB_OPTS)  \
-        --build-arg rs_version=$(RS_VERSION) --build-arg base_name=$(DI_TM_MASTER) \
-        --build-arg itag=$(DT_TM_RS) -f $(DF_TM_RS) . > build_$(DI_TM_RS).log
+$(DI_RS).image: $(DF_RS) $(DI_TM).image
+ifeq ($(GTAG),master)
+	@echo ">>> "Building $(D_REP)/$(DI_RS):$(DT_RS) from git branch $(GTAG)
+	$(DB) -t $(D_REP)/$(DI_RS):$(DT_RS) $(DB_OPTS)  \
+        --build-arg rs_version=$(RS_VERSION) --build-arg base_name=$(DI_TM) \
+        --build-arg itag=latest -f $(DF_RS) . > build_$(DI_RS).log
 	touch $(DI_TM_RS).image
+	ifneq ($(DT_RS),latest)
+	    $(DC) tag $(D_REP)/$(DI_RS):$(DT_RS) $(D_REP)/$(DI_RS):latest
+	endif
+else
+	@echo ">>> "Build $(DI_RS) only for master branch
+endif
 
 .SUFFIXES : .dfile2 .image .push
 

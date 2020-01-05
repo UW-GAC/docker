@@ -1,0 +1,57 @@
+ARG itag=latest
+ARG base_name=tm-rpkgs-master
+ARG git_branch=master
+FROM uwgac/$base_name:$itag
+
+ARG git_branch
+
+ENV ANALYSIS_PIPELINE_BRANCH=$git_branch
+RUN echo "Pulling $ANALYSIS_PIPELINE_BRANCH branch analysis from github ..."
+
+# mkdir if needed
+ENV AP_DIR=/usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}
+RUN if [ ! -d ${AP_DIR}/analysis_pipeline ]; then \
+        echo "Cloning analysis pipeline ${ANALYSIS_PIPELINE_BRANCH}" && \
+        mkdir -p ${AP_DIR} && \
+        cd ${AP_DIR} && \
+        git clone -b ${ANALYSIS_PIPELINE_BRANCH} https://github.com/UW-GAC/analysis_pipeline.git; \
+    else \
+        echo "Pull analysis pipeline ${ANALYSIS_PIPELINE_BRANCH}" && \
+        cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}/analysis_pipeline && \
+        git checkout ${ANALYSIS_PIPELINE_BRANCH} && \
+        git pull origin ${ANALYSIS_PIPELINE_BRANCH}; \
+    fi
+
+ENV AP_LINK=/usr/local/analysis_pipeline
+
+# update link
+RUN if [ -e ${AP_LINK} ]; then \
+        unlink ${AP_LINK}; \
+    fi
+RUN ln -s ${AP_DIR}/analysis_pipeline ${AP_LINK}
+
+# analysis pipeline entry point
+ADD ap2batch.py /usr/local/bin
+
+# add jstats to manage batch jobs
+ADD jstats.py /usr/local/bin
+
+# add some users
+RUN groupadd -g 2049 topmed && \
+  useradd -rm -d /home/topmed -s /bin/bash -g topmed -G sudo -u 2049 topmed && \
+  useradd -rm -d /home/ubuntu -s /bin/bash -g topmed -G sudo ubuntu && \
+  useradd -rm -d /home/analyst -s /bin/bash -g topmed -G sudo analyst
+
+# create an .aws directory in everyone's home
+RUN mkdir /home/topmed/.aws && \
+  mkdir /home/ubuntu/.aws && \
+  mkdir /home/analyst/.aws
+
+# set umask to 002 so that files created via batch or docker can easily be managed
+# by users on the local computer (topmed-docker)
+
+RUN sed -i '1iumask 002' /home/topmed/.bashrc
+RUN sed -i '1iumask 002' /home/ubuntu/.bashrc
+RUN sed -i '1iumask 002' /home/analyst/.bashrc
+
+USER topmed:topmed

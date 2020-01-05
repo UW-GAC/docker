@@ -79,12 +79,17 @@ RUN if [ -d /usr/local/bin/locuszoom ]; then \
 RUN ln -s /usr/local/src/locuszoom-standalone/bin/locuszoom /usr/local/bin/locuszoom
 
 # install aws cli and boto3
-RUN pip install pip --upgrade
-RUN pip install awscli --upgrade
-RUN pip install boto3 --upgrade
+RUN python2.7 -m pip install awscli --upgrade
+RUN python2.7 -m pip install boto3 --upgrade
+RUN python3 -m pip install awscli --upgrade
+RUN python3 -m pip install boto3 --upgrade
 
 # install python requests
-RUN pip install requests
+RUN python -m pip install requests
+RUN python -m pip install future
+RUN python3 -m pip install requests
+RUN python3 -m pip install future
+
 
 # install unzip
 RUN apt-get update && apt-get install -y unzip
@@ -102,26 +107,3 @@ RUN mkdir -p /usr/local/src/king && \
     wget http://people.virginia.edu/~wc9c/KING/executables/Ubuntu-king22.tar.gz && \
     tar -xf Ubuntu-king22.tar.gz && \
     ln -s /usr/local/src/king/king /usr/local/bin/king
-
-# install sudo
-RUN apt-get update && apt-get install -y sudo
-RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-
-# add some users
-RUN groupadd -g 1002 topmed && \
-  useradd -m -s /bin/bash -r -u 1000 -g topmed ubuntu && \
-  useradd -m -s /bin/bash -r -u 1099 -g topmed analyst
-RUN adduser ubuntu sudo
-RUN adduser analyst sudo
-
-# create an .aws directory in everyone's home
-RUN mkdir ~/.aws && \
-  mkdir /home/ubuntu/.aws && \
-  mkdir /home/analyst/.aws
-
-# set umask to 002 so that files created via batch or docker can easily be managed
-# by users on the local computer (topmed-docker)
-
-RUN echo "umask    002" >> /root/.bashrc
-RUN echo "umask    002" >> /home/ubuntu/.bashrc
-RUN echo "umask    002" >> /home/analyst/.bashrc

@@ -1,42 +1,44 @@
 ARG base_name=apps
 ARG itag=latest
+ARG ra_version=3.6.1
 FROM uwgac/$base_name:$itag
 
-ARG r_version=3.6.1
+ARG ra_version
+ENV R_VERSION=$ra_version
 # download R
 RUN mkdir /usr/local/src/R && \
     cd /usr/local/src/R && \
-    wget --no-check-certificate https://cran.r-project.org/src/base/R-3/R-$r_version.tar.gz && \
-    tar zxf R-$r_version.tar.gz
+    wget --no-check-certificate https://cran.r-project.org/src/base/R-3/R-$R_VERSION.tar.gz && \
+    tar zxf R-$R_VERSION.tar.gz
 
 # create the R target install
-RUN mkdir /usr/local/R-$r_version
+RUN mkdir /usr/local/R-$R_VERSION
 
 # set config vars for building R with sequential mkl; config; make
 RUN echo "Building R with sequential MKL ..." && \
     MKL_LIB_PATH=/opt/intel/mkl/lib/intel64 && \
     export LD_LIBRARY_PATH=$MKL_LIB_PATH && \
     MKL="-m64 -L${MKL_LIB_PATH} -lmkl_gf_lp64 -lmkl_core -lmkl_sequential -lpthread -lm" && \
-    mkdir /usr/local/src/R/R-$r_version/build_sequential && \
-    cd /usr/local/src/R/R-$r_version/build_sequential && \
-    /usr/local/src/R/R-$r_version/configure --enable-R-shlib --enable-threads=posix --prefix=/usr/local/R-$r_version --with-blas="$MKL" --with-lapack && \
+    mkdir /usr/local/src/R/R-$R_VERSION/build_sequential && \
+    cd /usr/local/src/R/R-$R_VERSION/build_sequential && \
+    /usr/local/src/R/R-$R_VERSION/configure --enable-R-shlib --enable-threads=posix --prefix=/usr/local/R-$R_VERSION --with-blas="$MKL" --with-lapack && \
     make && \
 #    make check && \
     make info && \
     make install
 # create link to R/Rscript
-RUN ln -sf /usr/local/R-$r_version/lib/R/bin/R /usr/local/bin/R_s && \
-    ln -sf /usr/local/R-$r_version/lib/R/bin/Rscript /usr/local/bin/Rscript_s
+RUN ln -sf /usr/local/R-$R_VERSION/lib/R/bin/R /usr/local/bin/R_s && \
+    ln -sf /usr/local/R-$R_VERSION/lib/R/bin/Rscript /usr/local/bin/Rscript_s
 
 # set config vars for building R with parallel mkl; config; make
-ARG p_version=${r_version}p
+ARG p_version=${R_VERSION}p
 RUN echo "Building R with parallel MKL ..." && \
     MKL_LIB_PATH=/opt/intel/mkl/lib/intel64 && \
     export LD_LIBRARY_PATH=$MKL_LIB_PATH && \
     MKL="-m64 -L${MKL_LIB_PATH} -Wl,--no-as-needed -lmkl_gf_lp64 -lmkl_gnu_thread -lmkl_core -fopenmp -lpthread -lm -ldl" && \
-    mkdir /usr/local/src/R/R-$r_version/build_parallel && \
-    cd /usr/local/src/R/R-$r_version/build_parallel && \
-    /usr/local/src/R/R-$r_version/configure --enable-R-shlib --enable-threads=posix  --enable-R-shlib --enable-threads=posix --prefix=/usr/local/R-"$r_version"p  --with-blas="$MKL" --with-lapack && \
+    mkdir /usr/local/src/R/R-$R_VERSION/build_parallel && \
+    cd /usr/local/src/R/R-$R_VERSION/build_parallel && \
+    /usr/local/src/R/R-$R_VERSION/configure --enable-R-shlib --enable-threads=posix  --enable-R-shlib --enable-threads=posix --prefix=/usr/local/R-"$R_VERSION"p  --with-blas="$MKL" --with-lapack && \
     make && \
 #    make check && \
     make info && \
