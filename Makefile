@@ -1,5 +1,5 @@
 # common config macros (changing)
-GTAG = python3
+GTAG = devel
 #GTAG = roybranch
 #GTAG = devel
 #GTAG = master
