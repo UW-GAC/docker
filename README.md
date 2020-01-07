@@ -1,91 +1,86 @@
 ## docker ##
 
-This project builds various docker images associated with TOPMed.  By default the following docker images are built:
-- ubuntu-18.04-hpc
-- apps
-- r-3.6.1-mkl
-- tm-rpkgs-master
-- tm-rpkgs-devel
-- topmed-master
-- topmed-devel
+This project builds various docker images associated with TOPMed.  There are two types of docker images: (1) core images and (2) topmed images.  All of the topmed images are built upon the core  images.  
+
+The core docker images are:
+- `ubuntu-18.04-hpc` - ubuntu 18.04; python2; python3; hdf5; mpich; openmpi; Intel's MKL
+- `apps` - samtools; locuszoom; awscli; boto3; unzip; king
+- `r-3.6.1-mkl` - R 3.6.1 built from `ubuntu-18.04-hpc` using the MKL
+
+The topmed images are associated with the TOPMed analysis pipeline.  The analysis pipeline includes python, R,  and are built based on the git hub repository branch
+- `tm-rpkgs-master` - TOPMed R packages compatible with the master branch of the analysis pipeline git repository and built from the `r-3.6.1-mkl` image
+- `tm-rpkgs-devel` - TOPMed R packages compatible with the devel branch of the analysis pipeline git repository and built from the `r-3.6.1-mkl` image
+- `topmed-master` - Master branch of the analysis pipeline built from the `tm-rpkgs-master` image
+- `topmed-devel`  - Devel branch of the analysis pipeline based built from the `tm-rpkgs-devel` image
+- `topmed-python3` - Python3 branch of the analysis pipeline based built from the `topmed-devel` image
 
 The project includes the following files:
-- a makefile for building the various docker images in the appropriate order (see below)
-- docker build file associated with each image
-- python files associated with commands running the TOPMed analysis pipeline
+- a makefile for building the docker images (see below)
+- docker build files associated with building the docker images
+- python files added to the `topmed-devel` image and the `topmed-master` image
 - although not in this repository, the MKL installation tar file must also be in the makefile directory (_see **special note** below_)
-
 ## building the docker images ##
-Execute the makefile (`Makefile`) for building the docker images in the correct order (as described in the next section).  The makefile contains macros defining each image name, image tag, and docker build file.  Also the make file defines the dependencies of the docker images.
+Execute the makefile (`Makefile`) for building the core and topmed docker images.  By default, the master branch topmed images are built (the core docker images are independent of the git branch of the analysis pipeline).  The makefile contains macros defining the git branch, each image name, image tag, and docker build file.  Also the makefile defines the dependencies of the docker images.
 
-When a docker image is successfully built, an empty target file is created with the following name:
+When a docker image is successfully built using an associated docker build file, an empty target file is created with the following name:
 ```{r}
 <docker image name>.image
 ```
-If the target file does not exist (or it has been created before the associated docker build file), the docker build file is executed.  Conversely, if the target file does exist and is newer than the associated docker build file, then the docker build file is not executed.
+If the target file does not exist (or it has been created before the associated docker build file), the makefile will execute the docker build command using the docker build file.  Conversely, if the target file does exist and is newer than the associated docker build file, the the makefile will not execute the docker build command.
 
-By default the docker build does not use the cache when building an image (i.e., `--no-cache` option).  If using the cache is desirable, then specify `cfg=cache` option to the makefile.  For example
+There are numerous macros used by the makefile.  All macros can be defined to new values when executing the makefile; however, the most common macros include the following:
+1. GTAG - the git branch of the analysis pipeline [Default: `master`]
+2. R_VERSION - the version of R to build [Default: 3.6.1]
+3. USECACHE - if defined, used docker's cache when building [Default: not defined]
+4. MKL_VERSION - the version of the MKL tar gz file [Default: `l_mkl_2018.1.163.tgz`]
+4. DTAG - Docker tag for the docker images [Default: 2.6]
+_(Note: If the docker tag, `DTAG` is not defined as `latest`, then the docker tag `latest` will also be created for each image)_
+#### examples of execute the makefile ####
+1. No command execution
 ```{r}
-make cfg=cache
+make -n
 ```
-Additionally, the makefile's macros associated with the versions of software (e.g., ubuntu, R) and tags of the docker images can be changed via command line arguments.  For example:
+Run make with the _-n_ option, outputs the various commands without executing them.
+
+2. Build the docker images
 ```{r}
-make OS_VERSION=18.04 DTAG=18.04 R_VERSION=3.6.1
+make
 ```
-The above command builds docker images based on ubuntu 18.04 and R 3.5.3; the tags of all images will be 18.04
+Run make and when appropriate execute commands to build the docker core images; and the TOPMed images using the master branch of the analysis pipeline's git repository.
 
-#### (special note for building building the ubuntu hpc image) ####
-Building the ubuntu hpc image requires Intel's Math Kernel Library (MKL) and the tar file must exist in the current build directory.  The default MKL being installed and built is `l_mkl_2018.1.163.tgz`
+By default all docker images will have two tags: `latest` and `2.6`
 
-The version of MKL can be changed by executing the makefile with the `MKL_VERSION` macro.  For example,
-
+3. Build the devel docker images
 ```{r}
-make MKL_VERSION=2018.1.163
+make GTAG=devel
 ```
+Run make and when appropriate execute commands to build the docker core images; and the TOPMed images using the devel branch of the analysis pipeline's git repository.
 
-## pushing the docker images to uwgac repository##
-The makefile also provides the ability to push the docker images to the repository:
-```{r}
-make push
-```
-
-If a docker image has not been built (because the .image file does not exist or is newer than the docker build file), the docker image will be built before the push.
+By default all docker images will have two tags: `latest` and `2.6`
 
 ## docker build files ##
 The docker build files are:
-1. ubuntu-16.04-hpc.dfile - Builds a ubuntu-based image with hpc functionality.
-2. ubuntu-18.04-hpc.dfile - Builds a ubuntu-based image with hpc functionality.
-3. apps.dfile - From the ubuntu-based image, build an application image including the applications `samtools` and `locuszoom`.
-4. r-mkl.dfile - Build an R image from the application image using both sequential and parallel MKL.
-5. tm-rpkgs-master.dfile - Builds the R packages associated with analysis pipeline master branch
-6. tm-rpkgs-devel.dfile - Builds the R packages associated with analysis pipeline devel branch
-7. topmed-master.dfile - From the R image, build a TOPMed image using the master branch of the analysis pipeline.
-8. topmed-devel.dfile - From the R image, build a TOPMed image using the devel branch of the analysis pipeline.
+1. ubuntu-18.04-hpc.dfile - Builds a ubuntu-based image with hpc functionality.
+2. apps.dfile - From the ubuntu-based image, build an application image including the applications `samtools` and `locuszoom`.
+3. r-mkl.dfile - Build an R image from the application image using both sequential and parallel MKL.
+4. tm-rpkgs.dfile - Based on value of GTAG, builds the R packages associated with analysis pipeline
+5. topmed.dfile - Based on value of GTAG, builds a TOPMed image
 
 ## docker image names and tags ##
 The docker image names and tags are controlled by the makefile in conjunction with the docker build files.  The default names and tags are described in the following table:
 
-| docker build file | default docker image | default docker tag | base image |
-| --- | --- | --- | --- |
-| ubuntu-16.04-hpc.dfile | ubuntu-16.04-hpc | latest | ubuntu:16.04 |
-| ubuntu-18.04-hpc.dfile | ubuntu-18.04-hpc | latest | ubuntu:18.04
-| apps.dfile | apps | latest | ubuntu-xx.04-hpc |
-| r-mkl.dfile | r-3.6.1-mkl | latest | apps |
-| tm-rpkgs-master.dfile | tm-rpkgs-master | latest | r-3.6.1-mkl |
-| tm-rpkgs-master.dfile | tm-rpkgs-devel | latest | r-3.6.1-mkl |
-| topmed-master.dfile | tomped-master | latest | tm-rpkgs-master |
-| topmed-devel.dfile | topmed-devel | latest | tm-rpkgs-devel |
+| docker build file | GTAG |default docker image | default docker tags | base image |
+| --- | --- | --- | --- |--- |
+| ubuntu-18.04-hpc.dfile | n/a | ubuntu-18.04-hpc | latest; 2.6 | ubuntu:18.04
+| apps.dfile | n/a | apps | latest; 2.6 | ubuntu-18.04-hpc |
+| r-mkl.dfile | n/a | r-3.6.1-mkl | latest | apps |
+| tm-rpkgs.dfile | master | tm-rpkgs-master | latest | r-3.6.1-mkl |
+| topmed-master.dfile | master | tomped-master | latest | tm-rpkgs-master |
 
 The default versions of software (e.g., `R 3.6.1`) is specified in both the makefile and the docker build files; but these versions can be changed either in the makefile or as options when executing the makefile.  For example, to build with R version 3.6.3:
 
 ```{r}
 make R_VERSION=3.6.3
-```
-
-Additionally, an additional tag is manually added to the docker images `tomped-master` and `tomped-devel`.  The tag is the version of TopmedPipeline.py (`__version__ `).  For example,
-
-```{r}
-docker tag uwgac/topmed-master:latest uwgac/topmed-master:2.5.0
 ```
 ## python files ##
 The python files are:
