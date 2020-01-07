@@ -14,7 +14,7 @@ DC = docker
 DB = $(DC) build
 D_REP = uwgac
 DO_FLAGS =
-ifeq ($(cfg),cache)
+ifdef $(USECACHE)
 	CACHE_OPT =
 else
 	CACHE_OPT = --no-cache
