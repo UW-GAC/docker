@@ -1,15 +1,15 @@
 ## docker ##
 
-This project builds various docker images associated with TOPMed.  There are two types of docker images: (1) core images and (2) topmed images.  All of the topmed images are built upon the core  images.  
+This project builds various docker images associated with TOPMed.  There are two types of docker images: (1) core images and (2) TOPMed images.  All of the TOPMed images are built upon the core  images.  
 
 The core docker images are:
 - `ubuntu-18.04-hpc` - ubuntu 18.04; python2; python3; hdf5; mpich; openmpi; Intel's MKL
-- `apps` - samtools; locuszoom; awscli; boto3; unzip; king
-- `r-3.6.1-mkl` - R 3.6.1 built from `ubuntu-18.04-hpc` using the MKL
+- `apps` - samtools; locuszoom; awscli; boto3; unzip; king built from `ubuntu-18.04-hpc`
+- `r-3.6.1-mkl` - R 3.6.1 built from `apps` using the MKL
 
-The topmed images are associated with the TOPMed analysis pipeline.  The analysis pipeline includes python, R,  and are built based on the git hub repository branch
-- `tm-rpkgs-master` - TOPMed R packages compatible with the master branch of the analysis pipeline git repository and built from the `r-3.6.1-mkl` image
-- `tm-rpkgs-devel` - TOPMed R packages compatible with the devel branch of the analysis pipeline git repository and built from the `r-3.6.1-mkl` image
+The TOPMed images are associated with the TOPMed analysis pipeline.  The analysis pipeline includes python and R code. It has two major branches in its git hub repository: master and devel. The TOPMed docker images are built based on the branches of the git hub repository for the analysis pipeline.  The TOPMed docker images are:
+- `tm-rpkgs-master` - TOPMed R packages compatible with the master branch of the analysis pipeline and built from the `r-3.6.1-mkl` image
+- `tm-rpkgs-devel` - TOPMed R packages compatible with the devel branch of the analysis pipeline and built from the `r-3.6.1-mkl` image
 - `topmed-master` - Master branch of the analysis pipeline built from the `tm-rpkgs-master` image
 - `topmed-devel`  - Devel branch of the analysis pipeline based built from the `tm-rpkgs-devel` image
 - `topmed-python3` - Python3 branch of the analysis pipeline based built from the `topmed-devel` image
@@ -20,7 +20,7 @@ The project includes the following files:
 - python files added to the `topmed-devel` image and the `topmed-master` image
 - although not in this repository, the MKL installation tar file must also be in the makefile directory (_see **special note** below_)
 ## building the docker images ##
-Execute the makefile (`Makefile`) for building the core and topmed docker images.  By default, the master branch topmed images are built (the core docker images are independent of the git branch of the analysis pipeline).  The makefile contains macros defining the git branch, each image name, image tag, and docker build file.  Also the makefile defines the dependencies of the docker images.
+Execute the makefile (`Makefile`) for building the core and TOPMed docker images.  By default, the master branch topmed images are built (the core docker images are independent of the git branch of the analysis pipeline).  The makefile contains macros defining the git branch, each image name, image tag, and docker build file.  Also the makefile defines the dependencies of the docker images.
 
 When a docker image is successfully built using an associated docker build file, an empty target file is created with the following name:
 ```{r}
@@ -46,7 +46,7 @@ Run make with the _-n_ option, outputs the various commands without executing th
 ```{r}
 make
 ```
-Run make and when appropriate execute commands to build the docker core images; and the TOPMed images using the master branch of the analysis pipeline's git repository.
+Run make and when appropriate execute commands to build the docker core images; and the TOPMed images using the master branch of the analysis pipeline.
 
 By default all docker images will have two tags: `latest` and `2.6`
 
@@ -54,7 +54,7 @@ By default all docker images will have two tags: `latest` and `2.6`
 ```{r}
 make GTAG=devel
 ```
-Run make and when appropriate execute commands to build the docker core images; and the TOPMed images using the devel branch of the analysis pipeline's git repository.
+Run make and when appropriate execute commands to build the docker core images; and the TOPMed images using the devel branch of the analysis pipeline.
 
 By default all docker images will have two tags: `latest` and `2.6`
 
@@ -63,8 +63,8 @@ The docker build files are:
 1. ubuntu-18.04-hpc.dfile - Builds a ubuntu-based image with hpc functionality.
 2. apps.dfile - From the ubuntu-based image, build an application image including the applications `samtools` and `locuszoom`.
 3. r-mkl.dfile - Build an R image from the application image using both sequential and parallel MKL.
-4. tm-rpkgs.dfile - Based on value of GTAG, builds the R packages associated with analysis pipeline
-5. topmed.dfile - Based on value of GTAG, builds a TOPMed image
+4. tm-rpkgs.dfile - Based on the value of GTAG, builds the TOPMed R packages associated with analysis pipeline
+5. topmed.dfile - Based on the value of GTAG, builds a TOPMed image
 
 ## docker image names and tags ##
 The docker image names and tags are controlled by the makefile in conjunction with the docker build files.  The default names and tags are described in the following table:
