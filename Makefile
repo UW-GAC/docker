@@ -53,12 +53,13 @@ DI_APPS = $(DB_APPS)
 DI_PKGS = $(DB_PKGS)-$(GTAG)
 DI_TM = $(DB_TM)-$(GTAG)
 DI_RS = $(DB_RS)-$(GTAG)
-D_IMAGES = $(DI_OS) $(DI_APPS) $(DI_R) $(DI_PKGS) $(DI_TM) $(DI_TM_RS)
+D_IMAGES = $(DI_OS) $(DI_APPS) $(DI_R) $(DI_PKGS) $(DI_TM) $(DI_RS)
 D_ALL_IMAGES = $(addsuffix .image,$(D_IMAGES))
 D_PUSH = $(addsuffix .push,$(D_IMAGES))
 # summary
 ifeq ($(GTAG),master)
 	TM_BASENAME=$(DI_PKGS)
+	RS_BASENAME=
 else ifeq ($(GTAG),devel)
 	TM_BASENAME=$(DI_PKGS)
 else ifeq ($(GTAG),roybranch)
@@ -128,17 +129,15 @@ $(DI_TM).image: $(DF_TM) $(DI_PKGS).image
 	touch $(DI_TM).image
 
 $(DI_RS).image: $(DF_RS) $(DI_TM).image
-ifeq ($(GTAG),master)
+ifeq ($(GTAG),devel)
 	@echo ">>> "Building $(D_REP)/$(DI_RS):$(DT_RS) from git branch $(GTAG)
 	$(DB) -t $(D_REP)/$(DI_RS):$(DT_RS) $(DB_OPTS)  \
         --build-arg rs_version=$(RS_VERSION) --build-arg base_name=$(DI_TM) \
         --build-arg itag=latest -f $(DF_RS) . > build_$(DI_RS).log
-	touch $(DI_TM_RS).image
-	ifneq ($(DT_RS),latest)
-	    $(DC) tag $(D_REP)/$(DI_RS):$(DT_RS) $(D_REP)/$(DI_RS):latest
-	endif
+	$(DC) tag $(D_REP)/$(DI_RS):$(DT_RS) $(D_REP)/$(DI_RS):latest
+	touch $(DI_RS).image
 else
-	@echo ">>> "Build $(DI_RS) only for master branch
+	@echo ">>> "Build $(DI_RS) only for devel branch
 endif
 
 .SUFFIXES : .dfile2 .image .push
