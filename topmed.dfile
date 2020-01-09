@@ -54,4 +54,8 @@ RUN sed -i '1iumask 002' /home/topmed/.bashrc
 RUN sed -i '1iumask 002' /home/ubuntu/.bashrc
 RUN sed -i '1iumask 002' /home/analyst/.bashrc
 
+# add umask task
+ADD umask.sh /usr/local/bin
+
 USER topmed:topmed
+ENTRYPOINT ["/usr/local/bin/umask.sh"]
