@@ -1,0 +1,46 @@
+ARG itag=latest
+ARG base_name=r-mkl-3.6.1
+ARG git_branch=master
+FROM uwgac/$base_name:$itag
+
+ARG git_branch
+
+ENV ANALYSIS_PIPELINE_BRANCH=$git_branch
+RUN echo "Building sequential version of R packages for analysis_pipeline $ANALYSIS_PIPELINE_BRANCH ..."
+
+# clone topmed pipeline
+RUN mkdir /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH} && \
+    cd /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH} && \
+    git clone -b $ANALYSIS_PIPELINE_BRANCH https://github.com/UW-GAC/analysis_pipeline.git
+
+# ==========================================
+# create link to analysis analysis_pipeline
+# ==========================================
+RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}/analysis_pipeline /usr/local/analysis_pipeline
+
+# ============================================
+# build the R pkgs for the sequential version
+# ============================================
+# switch to appropriate R
+RUN R_switch s
+
+# install manually logistf because gwastools in install_packages.R needs it
+# but somehow couldn't be found
+RUN Rscript -e 'install.packages("logistf", repos="https://cloud.r-project.org")'
+# execute R script to install topmed packages
+RUN cd /usr/local/analysis_pipeline && \
+    Rscript --vanilla --no-save --slave install_packages.R
+
+
+# ============================================
+# build the R pkgs for the parallel version
+# ============================================
+# switch to appropriate R
+RUN R_switch p
+
+# install manually logistf because gwastools in install_packages.R needs it
+# but somehow couldn't be found
+RUN Rscript -e 'install.packages("logistf", repos="https://cloud.r-project.org")'
+# execute R script to install topmed packages
+RUN cd /usr/local/analysis_pipeline && \
+    Rscript --vanilla --no-save --slave install_packages.R
