@@ -14,6 +14,13 @@ RUN (echo "rstudio:rstudio"|chpasswd)
 RUN apt-get update && sudo apt-get install -y locales
 RUN locale-gen en_US.UTF-8
 
+# install R package 'png' for viewing png files
+ENV IP_FILE=/tmp/install_pkg.R
+RUN echo "#! /usr/local/bin/Rscript --no-save --slave" > ${IP_FILE} && \
+  echo "install.packages('png', rep='https://ftp.osuosl.org/pub/cran/')" >> ${IP_FILE} && \
+  chmod +x ${IP_FILE} && \
+  ${IP_FILE}
+
 # install rstudio
 RUN apt-get update && apt-get install -y \
   net-tools \
