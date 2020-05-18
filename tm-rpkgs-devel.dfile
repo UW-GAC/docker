@@ -28,10 +28,8 @@ RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}/analysis_pipeline ${
 # switch to appropriate R
 RUN R_switch s
 
-# install manually logistf because gwastools in install_packages.R needs it
-# but somehow couldn't be found
-RUN Rscript -e 'install.packages("logistf", repos="https://cloud.r-project.org")'
 # execute R script to install topmed packages
+RUN echo ">>> (sequential) Executing install_topmed_packages.R ..."
 RUN cd /usr/local/analysis_pipeline && \
     Rscript --vanilla --no-save --slave install_topmed_packages.R
 
@@ -41,10 +39,9 @@ RUN cd /usr/local/analysis_pipeline && \
 # ============================================
 # switch to appropriate R
 RUN R_switch p
+RUN echo "Building parallel version of R packages for analysis_pipeline $ANALYSIS_PIPELINE_BRANCH ..."
 
-# install manually logistf because gwastools in install_packages.R needs it
-# but somehow couldn't be found
-RUN Rscript -e 'install.packages("logistf", repos="https://cloud.r-project.org")'
 # execute R script to install topmed packages
+RUN echo ">>> (parallel) Executing install_topmed_packages ..."
 RUN cd /usr/local/analysis_pipeline && \
     Rscript --vanilla --no-save --slave install_topmed_packages.R
