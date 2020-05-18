@@ -26,8 +26,11 @@ RUN R_switch s
 
 # install manually logistf because gwastools in install_packages.R needs it
 # but somehow couldn't be found
+RUN echo ">>> (sequential) R install of logistf/lazyeval ..."
 RUN Rscript -e 'install.packages("logistf", repos="https://cloud.r-project.org")'
+RUN Rscript -e 'install.packages("lazyeval", repos="https://cloud.r-project.org")'
 # execute R script to install topmed packages
+RUN echo ">>> (sequential) Executing install_packages.R ..."
 RUN cd /usr/local/analysis_pipeline && \
     Rscript --vanilla --no-save --slave install_packages.R
 
@@ -40,7 +43,10 @@ RUN R_switch p
 
 # install manually logistf because gwastools in install_packages.R needs it
 # but somehow couldn't be found
+RUN echo ">>> (parallel) R install of logistf/lazyeval ..."
 RUN Rscript -e 'install.packages("logistf", repos="https://cloud.r-project.org")'
+RUN Rscript -e 'install.packages("lazyeval", repos="https://cloud.r-project.org")'
 # execute R script to install topmed packages
+RUN echo ">>> (parallel) Executing install_packages.R ..."
 RUN cd /usr/local/analysis_pipeline && \
     Rscript --vanilla --no-save --slave install_packages.R
