@@ -26,12 +26,12 @@ RUN ln -s /usr/local/src/topmed_${ANALYSIS_PIPELINE_BRANCH}/analysis_pipeline ${
 # build the R pkgs for the sequential version
 # ============================================
 # switch to appropriate R
-##RUN R_switch s
+RUN R_switch s
 
 # execute R script to install topmed packages
-##RUN echo ">>> (sequential) Executing install_topmed_packages.R ..."
-##RUN cd /usr/local/analysis_pipeline && \
- ##   Rscript --vanilla --no-save --slave install_topmed_packages.R
+RUN echo ">>> (sequential) Executing install_topmed_packages.R ..."
+RUN cd /usr/local/analysis_pipeline && \
+    Rscript --vanilla --no-save --slave install_topmed_packages.R
 
 
 # ============================================
