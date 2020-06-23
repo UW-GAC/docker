@@ -116,7 +116,7 @@ $(DI_APPS).image: $(DF_APPS) $(DI_OS).image
 $(DI_R).image: $(DF_R) $(DI_APPS).image
 	@echo ">>> "Building $(D_REP)/$(DI_R):$(DT_R)
 	$(DB) -t $(D_REP)/$(DI_R):$(DT_R) $(DB_OPTS) \
-        --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_APPS) \
+        --build-arg ra_version=$(R_VERSION) --build-arg base_name=$(DI_APPS) \
         --build-arg itag=latest -f $(DF_R) . > build_$(DI_R).log
 	$(DC) tag $(D_REP)/$(DI_R):$(DT_R) $(D_REP)/$(DI_R):latest
 	touch $(DI_R).image
