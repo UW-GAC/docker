@@ -4,10 +4,10 @@ GTAG = devel
 #GTAG = devel
 #GTAG = master
 OS_VERSION = 18.04
-R_VERSION=3.6.1
-MKL_VERSION = 2019.2.187
+R_VERSION=3.6.3
+MKL_VERSION = 2020.1.217
 RS_VERSION=1.2.1335
-DEVEL_VERSION = 2.7.5
+DEVEL_VERSION = 2.7.6
 MASTER_VERSION = 2.6.0
 
 
@@ -42,9 +42,9 @@ DF_TM = $(DB_TM).dfile
 DF_RS = $(DB_RS).dfile
 
 # macros of docker image tags
-DT_OS = 11.1.2019
+DT_OS = 6.20.2020
 DT_R = $(R_VERSION)
-DT_APPS = 11.1.2019
+DT_APPS = 6.20.2020
 DT_PKG_MASTER = $(MASTER_VERSION)
 DT_PKG_DEVEL = $(DEVEL_VERSION)
 DT_TM_MASTER = $(MASTER_VERSION)
@@ -99,14 +99,14 @@ push: $(D_PUSH)
 	@echo ">>> Push is complete"
 
 $(DI_OS).image: $(DF_OS)
-	@echo ">>> "Building $(D_REP)/$(DI_OS):$(DT_OS)
+	@echo ">>> $(shell date)" Building $(D_REP)/$(DI_OS):$(DT_OS)
 	$(DB) -t $(D_REP)/$(DI_OS):$(DT_OS) $(DB_OPTS) --build-arg base_os=$(DB_LINUX) \
         --build-arg mkl_version=$(MKL_VERSION) --build-arg itag=$(OS_VERSION) -f $(DF_OS) . > build_$(DI_OS).log
 	$(DC) tag $(D_REP)/$(DI_OS):$(DT_OS) $(D_REP)/$(DI_OS):latest
 	touch $(DI_OS).image
 
 $(DI_APPS).image: $(DF_APPS) $(DI_OS).image
-	@echo ">>> "Building $(D_REP)/$(DI_APPS):$(DT_APPS)
+	@echo ">>> $(shell date)" Building $(D_REP)/$(DI_APPS):$(DT_APPS)
 	$(DB) -t $(D_REP)/$(DI_APPS):$(DT_APPS) $(DB_OPTS) \
         --build-arg base_name=$(DI_OS) \
         --build-arg itag=latest -f $(DF_APPS) . > build_$(DI_APPS).log
@@ -114,15 +114,15 @@ $(DI_APPS).image: $(DF_APPS) $(DI_OS).image
 	touch $(DI_APPS).image
 
 $(DI_R).image: $(DF_R) $(DI_APPS).image
-	@echo ">>> "Building $(D_REP)/$(DI_R):$(DT_R)
+	@echo ">>> $(shell date)" Building $(D_REP)/$(DI_R):$(DT_R)
 	$(DB) -t $(D_REP)/$(DI_R):$(DT_R) $(DB_OPTS) \
-        --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_APPS) \
+        --build-arg ra_version=$(R_VERSION) --build-arg base_name=$(DI_APPS) \
         --build-arg itag=latest -f $(DF_R) . > build_$(DI_R).log
 	$(DC) tag $(D_REP)/$(DI_R):$(DT_R) $(D_REP)/$(DI_R):latest
 	touch $(DI_R).image
 
 $(DI_PKGS_MASTER).image: $(DF_PKGS_MASTER) $(DI_R).image
-	@echo ">>> "Building $(D_REP)/$(DI_PKGS_MASTER):$(DT_PACKAGE) from git branch master
+	@echo ">>> $(shell date)" Building $(D_REP)/$(DI_PKGS_MASTER):$(DT_PACKAGE) from git branch master
 	$(DB) -t $(D_REP)/$(DI_PKGS_MASTER):$(DT_PACKAGE) $(DB_OPTS) \
         --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_R) \
         --build-arg itag=latest --build-arg git_branch=master \
@@ -131,7 +131,7 @@ $(DI_PKGS_MASTER).image: $(DF_PKGS_MASTER) $(DI_R).image
 	touch $(DI_PKGS_MASTER).image
 
 $(DI_PKGS_DEVEL).image: $(DF_PKGS_DEVEL) $(DI_PKGS_MASTER).image
-	@echo ">>> "Building $(D_REP)/$(DI_PKGS_DEVEL):$(DT_PKG_DEVEL) from git branch devel
+	@echo ">>> $(shell date)" Building $(D_REP)/$(DI_PKGS_DEVEL):$(DT_PKG_DEVEL) from git branch devel
 	$(DB) -t $(D_REP)/$(DI_PKGS_DEVEL):$(DT_PKG_DEVEL) $(DB_OPTS) \
         --build-arg r_version=$(R_VERSION) --build-arg base_name=$(DI_PKGS_MASTER) \
         --build-arg itag=latest --build-arg git_branch=devel \
@@ -140,7 +140,7 @@ $(DI_PKGS_DEVEL).image: $(DF_PKGS_DEVEL) $(DI_PKGS_MASTER).image
 	touch $(DI_PKGS_DEVEL).image
 
 $(DI_TM).image: $(DF_TM) $(PKG_DEPEND).image
-	@echo ">>> "Building $(D_REP)/$(DI_TM):$(DT_IMAGE) from git branch $(GTAG)
+	@echo ">>> $(shell date)" Building $(D_REP)/$(DI_TM):$(DT_IMAGE) from git branch $(GTAG)
 	$(DB) -t $(D_REP)/$(DI_TM):$(DT_IMAGE) $(DB_OPTS)  \
         --build-arg base_name=$(TM_BASENAME) --build-arg itag=latest \
         --build-arg git_branch=$(GTAG) -f $(DF_TM) . > build_$(DI_TM).log
@@ -149,7 +149,7 @@ $(DI_TM).image: $(DF_TM) $(PKG_DEPEND).image
 
 $(DI_RS).image: $(DF_RS) $(DI_TM).image
 ifeq ($(GTAG),devel)
-	@echo ">>> "Building $(D_REP)/$(DI_RS):$(DT_RS) from git branch $(GTAG)
+	@echo ">>> $(shell date)" Building $(D_REP)/$(DI_RS):$(DT_RS) from git branch $(GTAG)
 	$(DB) -t $(D_REP)/$(DI_RS):$(DT_RS) $(DB_OPTS)  \
         --build-arg rs_version=$(RS_VERSION) --build-arg base_name=$(DI_TM) \
         --build-arg itag=latest -f $(DF_RS) . > build_$(DI_RS).log
@@ -167,7 +167,7 @@ endif
 	@touch $@
 
 .dfile2.image:
-	@echo ">>> building $(D_REP)/$*:$(D_TAG) $< "
+	@echo ">>> $(shell date)" building $(D_REP)/$*:$(D_TAG) $<
 	$(DB) -t $(D_REP)/$*:$(D_TAG) $(DB_FLAGS) -f $< . > build_$*.log
 	@touch $@
 
