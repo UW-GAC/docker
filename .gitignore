@@ -1,5 +1,4 @@
 *.tgz
-*.tar
 *.image
 *.push
 *.log
