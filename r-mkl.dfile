@@ -1,6 +1,6 @@
 ARG base_name=apps
 ARG itag=latest
-ARG ra_version=3.6.1
+ARG ra_version=3.6.3
 FROM uwgac/$base_name:$itag
 
 ARG ra_version
