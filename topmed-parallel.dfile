@@ -1,0 +1,6 @@
+FROM uwgac/topmed-master:latest
+
+RUN sudo chmod a+w /usr/local/R-3.6.3p/lib/R/library
+RUN sudo chmod -R a+w /usr/local/R-3.6.3p/lib/R/doc
+RUN Rscript -e 'install.packages("doParallel", repos="https://cloud.r-project.org")'
+RUN Rscript -e 'BiocManager::install("BiocParallel")'
