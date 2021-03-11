@@ -1,6 +1,6 @@
 ARG base_name=apps
 ARG itag=latest
-ARG ra_version=3.6.3
+ARG ra_version=4.0.4
 FROM uwgac/$base_name:$itag
 
 ARG ra_version
@@ -8,11 +8,16 @@ ENV R_VERSION=$ra_version
 # download R
 RUN mkdir /usr/local/src/R && \
     cd /usr/local/src/R && \
-    wget --no-check-certificate https://cran.r-project.org/src/base/R-3/R-$R_VERSION.tar.gz && \
+    RV=`echo $R_VERSION | cut -f1 -d "."` && \
+    wget --no-check-certificate https://cran.r-project.org/src/base/R-$RV/R-$R_VERSION.tar.gz && \
     tar zxf R-$R_VERSION.tar.gz
 
 # create the R target install
 RUN mkdir /usr/local/R-$R_VERSION
+
+# pcre2 needed for R 4
+RUN apt-get update && apt-get install -y \
+    libpcre2-dev
 
 # set config vars for building R with sequential mkl; config; make
 RUN echo "Building R with sequential MKL ..." && \

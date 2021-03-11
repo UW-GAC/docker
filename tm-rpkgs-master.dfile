@@ -1,5 +1,5 @@
 ARG itag=latest
-ARG base_name=r-mkl-3.6.1
+ARG base_name=r-mkl-4.0.4
 ARG git_branch=master
 FROM uwgac/$base_name:$itag
 

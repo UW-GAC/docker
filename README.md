@@ -5,11 +5,11 @@ This project builds various docker images associated with TOPMed.  There are two
 The core docker images are:
 - `ubuntu-18.04-hpc` - ubuntu 18.04; python2; python3; hdf5; mpich; openmpi; Intel's MKL
 - `apps` - samtools; locuszoom; awscli; boto3; unzip; king built from `ubuntu-18.04-hpc`
-- `r-3.6.1-mkl` - R 3.6.1 built from `apps` using the MKL
+- `r-4.0.4-mkl` - R 4.0.4 built from `apps` using the MKL
 
 The TOPMed images are associated with the TOPMed analysis pipeline.  The analysis pipeline includes python and R code. It has two major branches in its git hub repository: master and devel. The TOPMed docker images are built based on the branches of the git hub repository for the analysis pipeline.  The TOPMed docker images are:
-- `tm-rpkgs-master` - All of TOPMed R packages based on the `master` branch of the analysis pipeline and built from the `r-3.6.1-mkl` image
-- `tm-rpkgs-devel` - Only `SeqVarTools`, `GENESIS`, and `TopmedPipeline` R packages and built from the `tm-rpkgs-master` image
+- `tm-rpkgs-master` - All of TOPMed R packages based on the `master` branch of the analysis pipeline and built from the `r-4.0.4-mkl` image
+- `tm-rpkgs-devel` - Update only `SeqVarTools`, `GENESIS`, and `TopmedPipeline` R packages and built from the `tm-rpkgs-master` image
 - `topmed-master` - Master branch of the analysis pipeline built from the `tm-rpkgs-master` image
 - `topmed-devel`  - Devel branch of the analysis pipeline based built from the `tm-rpkgs-devel` image
 
@@ -21,7 +21,7 @@ The project includes the following files:
 
 ## building the docker images ##
 
-The docker images are built by executing the makefile (`Makefile`).  The makefile builds the core images and one of the two TOPMed images (i.e., either `topmed-master` or `topmed-devel`).  In building a TOPMed image there are two tagged versions: `latest` and a version number of TopmedPipeline (e.g., 2.6).
+The docker images are built by executing the makefile (`Makefile`).  The makefile builds the core images and one of the two TOPMed images (i.e., either `topmed-master` or `topmed-devel`).  In building a TOPMed image there are two tagged versions: `latest` and a version number of TopmedPipeline (e.g., 2.10.0).
 
 There are two ways to control various aspects of the makefile:
 1. modifying macros via command line arguments
@@ -35,23 +35,23 @@ The makefile also defines the following dependencies:
 
 By default (i.e., if none of the macros are altered and there are no image target files), the makefile will build and create the following:
 - uwgac/ubuntu-18.04-hpc:latest
-- uwgac/ubuntu-18.04-hpc:11.1.2019
+- uwgac/ubuntu-18.04-hpc:06.24.2020
 - uwgac/apps:latest
-- uwgac/apps:11.1.2019
-- uwgac/r-3.6.1-mkl:latest
-- uwgac/r-3.6.1-mkl:3.6.1
+- uwgac/apps:06.24.2020
+- uwgac/r-4.0.4-mkl:latest
+- uwgac/r-4.0.4-mkl:4.0.4
 - uwgac/tm-rpkgs-master:latest
-- uwgac/tm-rpkgs-master:2.7.5
+- uwgac/tm-rpkgs-master:2.10.0
 - uwgac/tm-rpkgs-devel:latest
-- uwgac/tm-rpkgs-devel:2.7.5
+- uwgac/tm-rpkgs-devel:2.10.0
 - uwgac/topmed-devel:latest
-- uwgac/topmed-devel:2.7.5
+- uwgac/topmed-devel:2.10.0
 
 A partial list of the macros include:
 - GTAG - the git branch of the analysis pipeline [Default: devel]
-- R_VERSION - the version of R to build [Default: 3.6.1]
-- MKL_VERSION - the version of the MKL tar gz file [Default: l_mkl_2019.2.187.tgz]
-- DEVEL_VERSION - the devel tag of TopmedPipeline version [Default: 2.7.5]
+- R_VERSION - the version of R to build [Default: 4.0.4]
+- MKL_VERSION - the version of the MKL tar gz file [Default: l_mkl_2020.1.217.tgz]
+- DEVEL_VERSION - the devel tag of TopmedPipeline version [Default: 2.10.0]
 - OS_VERSION - Ubuntu version [Default: 18.04]
 
 #### Examples of executing the makefile ####
@@ -74,9 +74,9 @@ make GTAG=master
 ```
 When appropriate executes commands to build the docker core images; and the TOPMed images using the master branch of the analysis pipeline.  The TOPMed images will be:
 - uwgac/topmed-master:latest
-- uwgac/topmed-master:2.6.0
+- uwgac/topmed-master:2.10.0
 
-4. Create images based on R 3.6.3
+4. Create images based on R 4.0.4
 
 ```{r}
 make R_VERSION=3.6.3

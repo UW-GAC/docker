@@ -2,7 +2,7 @@ ARG base_os=ubuntu
 ARG itag=18.04
 FROM $base_os:$itag
 
-ARG mkl_version=2018.1.163
+ARG mkl_version=2020.1.217
 # get development packages
 
 ENV TZ=America/Los_Angeles

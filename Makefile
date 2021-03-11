@@ -1,14 +1,13 @@
 # common config macros (changing)
-GTAG = devel
 #GTAG = roybranch
-#GTAG = devel
+GTAG = devel
 #GTAG = master
 OS_VERSION = 18.04
-R_VERSION=3.6.3
+R_VERSION=4.0.4
 MKL_VERSION = 2020.1.217
-RS_VERSION=1.2.1335
-DEVEL_VERSION = 2.8.1
-MASTER_VERSION = 2.8.1
+RS_VERSION = 1.2.1335
+DEVEL_VERSION = 2.10.0
+MASTER_VERSION = 2.10.0
 
 
 # other common macros (not changing much)
