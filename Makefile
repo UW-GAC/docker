@@ -3,11 +3,11 @@
 GTAG = devel
 #GTAG = master
 OS_VERSION = 18.04
-R_VERSION=4.0.4
+R_VERSION = 4.1.1
 MKL_VERSION = 2020.1.217
 RS_VERSION = 1.2.1335
-DEVEL_VERSION = 2.10.0
-MASTER_VERSION = 2.10.0
+DEVEL_VERSION = 2.12.1
+MASTER_VERSION = 2.12.1
 
 
 # other common macros (not changing much)
